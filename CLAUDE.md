@@ -37,5 +37,8 @@ concept pages, interactive diagrams, and a glossary from JSON concept specs.
   `auto` minimum blocks shrinking; the page blows out sideways). Mobile overrides go
   *after* the desktop rules they override. Verify at 390px by measuring
   (`scrollWidth` vs `innerWidth`), not by reading CSS.
+- **agent-browser clicks below the fold silently no-op** — the CLI reports ✓ Done but
+  the click lands outside the viewport and React state never changes. `scrollIntoView`
+  first, then verify state changed after every click.
 - **Accuracy is the product.** Every concept claim should be checkable against the cited
   sources. When Claude Code behavior changes, update the spec AND its `sources[]`.
