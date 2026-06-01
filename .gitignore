@@ -96,3 +96,4 @@ target/
 
 # review-loop state (local only)
 .review-loop.local.md
+.claude/retro/
