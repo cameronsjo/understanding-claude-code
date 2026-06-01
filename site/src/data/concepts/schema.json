@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cameronsjo/understanding-claude-code/concept-spec.schema.json",
+  "title": "Claude Code Concept Spec",
+  "description": "A structured explanation of one Claude Code concept. Drives the concept pages, diagrams, scenario players, and glossary.",
+  "type": "object",
+  "required": ["concept", "displayName", "cluster", "tagline", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "concept": {
+      "type": "string",
+      "description": "Stable slug; matches the filename.",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "displayName": { "type": "string" },
+    "cluster": {
+      "type": "string",
+      "enum": ["forks-branches", "hooks", "subagents", "context", "extensibility", "permissions", "mcp"],
+      "description": "Which concept cluster this belongs to. Drives sidenav grouping; new clusters need a CLUSTER_LABEL entry in types.ts."
+    },
+    "tagline": {
+      "type": "string",
+      "description": "One sentence that captures the concept — shown on cards and in the glossary."
+    },
+    "summary": {
+      "type": "string",
+      "description": "The opening paragraph of the concept page. **bold** spans render as anchor words."
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Position within the cluster (lower first). Concepts without an order sort after ordered ones, alphabetically."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["stable", "draft"],
+      "description": "Draft concepts render with a draft badge; default is stable."
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["heading", "body"],
+        "additionalProperties": false,
+        "properties": {
+          "heading": { "type": "string" },
+          "body": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Paragraphs. **bold** spans render as anchor words; no other markdown."
+          }
+        }
+      }
+    },
+    "diagram": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "additionalProperties": false,
+      "description": "Node/edge contract shared with the sibling repos' loop schema, so LoopGraph renders it unchanged.",
+      "properties": {
+        "caption": { "type": "string" },
+        "nodes": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "label": { "type": "string" },
+              "kind": {
+                "type": "string",
+                "enum": ["session", "fork", "subagent", "context", "tool", "git", "decision", "terminal"],
+                "description": "Concept-domain vocabulary — colors and legend labels come from KIND_COLOR / KIND_LABEL in types.ts."
+              },
+              "note": { "type": "string", "description": "Shown in the inspector when this node is the active step." }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "on": { "type": "string", "description": "Condition that selects this edge, e.g. 'subagent_type set'." },
+              "label": { "type": "string", "description": "Optional display label." }
+            }
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Step-through walkthroughs animated over the diagram. Ids are concept-local (no cross-spec parity).",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "steps"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "title": { "type": "string" },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Ordered list of diagram node ids the scenario traverses."
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "misconceptions": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The things that catch people — myth vs reality.",
+      "items": {
+        "type": "object",
+        "required": ["myth", "reality"],
+        "additionalProperties": false,
+        "properties": {
+          "myth": { "type": "string" },
+          "reality": { "type": "string" },
+          "why": { "type": "string", "description": "Optional: why the myth is so easy to believe." }
+        }
+      }
+    },
+    "related": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "description": "Slugs of related concepts. Validated to resolve to real spec files."
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["label"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "ref": { "type": "string", "description": "URL or repo-relative reference." }
+        }
+      }
+    }
+  }
+}

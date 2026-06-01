@@ -1,0 +1,670 @@
+/* App layout on top of the Artificer design system (artificer.css supplies tokens + .btn/.cluster/.card/.dot/.theme-toggle). */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+}
+
+/* Width, centering, inline padding come from .container--lg; keep only the
+   vertical rhythm here so the shell doesn't fight the system container. */
+.app {
+  padding-block: var(--s-lg) var(--s-2xl);
+}
+
+/* ---- appbar + intro band ---- */
+/* Artificer's .appbar carries its own `padding: 0 var(--s-md)` for a full-bleed
+   bar, but ours sits INSIDE .container--lg (already padded), so that 16px double-
+   insets the content — and on a phone it's the difference between the long wordmark
+   + theme toggle fitting or spilling 16px past the viewport. Zero it (higher
+   specificity beats the vendored rule + its safe-area variant). See a-d-s #83. */
+.app .appbar {
+  padding-inline: 0;
+}
+.appbar__brand .whimsy {
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+/* Mobile: the long wordmark + hamburger + theme toggle must share ~390px. Flex
+   items refuse to shrink below min-content by default, so the brand pushes the
+   toggle past the viewport edge (16px page overflow). Let the brand shrink and
+   ellipsize instead — the toggle and hamburger keep their full hit areas. */
+@media (max-width: 800px) {
+  .appbar__brand {
+    flex: 1;
+    min-width: 0;
+  }
+  .appbar__brand .whimsy {
+    display: block;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+/* The hamburger keeps the .btn--ghost default (--fg-secondary): at 32px the glyph
+   reads clearly without full --fg, which is glaringly bright on the dark bar. */
+.intro {
+  margin-block: var(--s-lg) var(--s-xl);
+}
+.lede {
+  margin: 0;
+  max-width: 70ch;
+}
+.masthead-meta {
+  gap: var(--s-xs);
+  margin-top: var(--s-xs);
+}
+
+/* ---- app shell: [ sidenav | content ] ---- */
+.app-shell {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: var(--s-lg);
+  align-items: start;
+}
+.app-sidenav {
+  position: sticky;
+  top: calc(56px + var(--s-md));
+}
+
+/* Sidenav button shim — Artificer styles only `.sidenav a`, but these items switch
+   SPA state rather than navigate, so they're <button>s. Replicate the link grammar. */
+.sidenav button {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--t-label-md-size);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.sidenav button > .label {
+  flex: 1;
+  min-width: 0;
+}
+.sidenav button:hover {
+  background: var(--bg);
+  color: var(--fg);
+}
+.sidenav button:focus-visible {
+  outline: var(--focus-width) solid var(--accent);
+  outline-offset: var(--focus-offset-inset);
+}
+.sidenav button[aria-current="page"] {
+  background: var(--bg);
+  color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ---- pill tabs (TabPicker) ---- */
+.tab {
+  border-radius: var(--radius-sm);
+}
+.tab--active {
+  background: var(--bg-raised);
+  color: var(--fg);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* ---- legend ---- */
+.legend {
+  gap: var(--s-md);
+  padding: var(--s-sm) var(--s-md);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--fg-secondary);
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- transport / scenario ---- */
+.scenario-tabs {
+  gap: var(--s-xs);
+  flex-wrap: wrap;
+}
+.transport {
+  gap: var(--s-xs);
+  align-items: center;
+}
+.step-counter {
+  color: var(--fg-secondary);
+  font-size: 0.85rem;
+  margin-left: var(--s-sm);
+}
+/* "walkthrough complete" caption — content, not chrome. Sits by the step counter
+   and shimmers once (Whimsy.celebrate adds .whimsy) when playback reaches the
+   final step, then auto-clears back to this resting style. */
+.turn-complete {
+  margin-left: var(--s-sm);
+  color: var(--fg-secondary);
+}
+.scenario-title {
+  font-family: var(--font-sans);
+  color: var(--fg);
+  margin: var(--s-sm) 0 var(--s-xs);
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+}
+
+/* ---- player ---- */
+.player-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--s-lg);
+  align-items: start;
+}
+.graph-pane {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+.inspector {
+  position: sticky;
+  top: var(--s-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+.node-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.node-kind {
+  font-size: 0.75rem;
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--s-sm);
+}
+.node-note,
+.scenario-note {
+  font-family: var(--font-sans);
+  color: var(--fg-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+.scenario-note {
+  padding-left: var(--s-md);
+  border-left: 2px solid var(--border);
+}
+
+/* Loop-graph node label — rendered in a foreignObject (see LoopGraph) so text
+   wraps inside the box instead of spilling past it. Centered both axes; the left
+   pad clears the 6px kind-color chip. pointer-events:none so clicks fall through
+   to the node <g>. overflow-wrap breaks long unbroken identifiers. */
+.loop-node-label {
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2px 11px 2px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.12;
+  color: var(--dia-node-fg);
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.loop-node-label--active {
+  color: var(--fg);
+  font-weight: 700;
+}
+.loop-node-line {
+  display: block;
+}
+
+/* ---- expand-to-modal (GraphModal) ---- */
+.graph-expand {
+  position: absolute;
+  top: var(--s-sm);
+  right: var(--s-sm);
+  z-index: 1;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+}
+/* Large, near-fullscreen panel (Artificer .scrim/.modal supply the overlay + chrome). */
+.graph-modal {
+  width: min(96vw, 1100px);
+  max-width: min(96vw, 1100px);
+  max-height: 92vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.graph-modal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-md);
+  padding: var(--s-sm) var(--s-sm) var(--s-sm) var(--s-md);
+  border-bottom: 1px solid var(--border);
+}
+.graph-modal__title {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+/* The ghost close button defaults to fg-secondary on transparent — too faint to
+   spot in the corner. Give it full-contrast at rest (hover still raises the bg). */
+.graph-modal__bar .btn--icon {
+  color: var(--fg);
+}
+.graph-modal__body {
+  overflow: auto;
+  padding: var(--s-md);
+}
+.graph-modal__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--s-lg);
+  align-items: start;
+}
+.graph-modal__diagram {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+/* Fit the diagram WITHIN the modal (contain) rather than filling its width: cap
+   the height so a tall graph scales down to the viewport instead of forcing a
+   scroll, and clamp width so a wide one fits too. viewBox holds the aspect ratio. */
+.graph-modal__diagram svg {
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+}
+.graph-modal__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+/* Mobile: true full-screen sheet, controls stacked under the diagram. */
+@media (max-width: 800px) {
+  .graph-scrim {
+    padding: 0;
+  }
+  .graph-modal {
+    /* dvw, not vw: vw counts the scrollbar gutter and pushes a sliver of
+       horizontal overflow on phones. dvw is the visible width. */
+    width: 100dvw;
+    max-width: 100dvw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .graph-modal__layout {
+    grid-template-columns: 1fr;
+  }
+  /* Leave room for the stacked controls below the diagram on a phone. */
+  .graph-modal__diagram svg {
+    max-height: 58dvh;
+  }
+}
+
+/* ---- concept index (cards grouped by cluster) ---- */
+.cluster-head {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--fg);
+}
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s-md);
+}
+/* .card supplies bg / border / radius / padding; the card is a <button> so the
+   whole surface is clickable + keyboard-focusable. */
+.concept-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-sm);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--fg);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.concept-card:hover {
+  border-color: var(--accent);
+}
+.concept-card:focus-visible {
+  outline: var(--focus-width) solid var(--accent);
+  outline-offset: 2px;
+}
+.concept-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-sm);
+}
+.concept-card__name {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+.concept-card__tagline {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--fg-secondary);
+  line-height: 1.5;
+}
+.concept-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-xs);
+  margin-top: auto;
+}
+
+/* ---- concept page ---- */
+.concept-head h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.concept-title {
+  gap: var(--s-sm);
+  align-items: center;
+}
+.concept-tagline {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--fg-secondary);
+  font-size: 1rem;
+}
+.concept-summary,
+.concept-para {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--fg);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 72ch;
+}
+.concept-section h3,
+.concept-page h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--fg);
+}
+.diagram-caption {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+  max-width: 72ch;
+}
+
+/* ---- misconceptions (myth vs reality) ---- */
+.misconception-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+.misconception {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+}
+.misconception p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 72ch;
+}
+.misconception__label {
+  display: inline-block;
+  margin-right: var(--s-sm);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--urgent-fill);
+  color: var(--urgent);
+}
+.misconception__label--reality {
+  background: var(--accent-fill);
+  color: var(--accent-bright);
+}
+.misconception__myth {
+  color: var(--fg-secondary);
+}
+.misconception__reality {
+  color: var(--fg);
+}
+.misconception__why {
+  color: var(--fg-secondary);
+  font-size: 0.85rem;
+  padding-left: var(--s-md);
+  border-left: 2px solid var(--border);
+}
+
+/* ---- see also / sources ---- */
+.see-also {
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+}
+.see-also__chip {
+  font-size: 0.85rem;
+}
+.concept-sources {
+  padding-top: var(--s-md);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+}
+.source-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+}
+.source-list .source-ref {
+  margin-left: var(--s-sm);
+}
+
+/* ---- glossary ---- */
+.glossary {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.glossary-row {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--s-md);
+  padding: var(--s-sm) 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.glossary-row dt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.glossary-row dd {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--fg-secondary);
+  line-height: 1.5;
+}
+.glossary-term {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+.glossary-term:hover {
+  text-decoration: underline;
+}
+.glossary-term:focus-visible {
+  outline: var(--focus-width) solid var(--accent);
+  outline-offset: 2px;
+}
+.glossary-cluster {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-disabled);
+}
+
+/* ---- shared bits ---- */
+.source-ref {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--accent-bright);
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  word-break: break-all;
+}
+.repo-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.repo-link:hover {
+  text-decoration: underline;
+}
+/* An .anchor keyword nested in a link inherits the link's gold instead of
+   the design system's default --fg white (artificer.css: .anchor { color: --fg }). */
+.repo-link .anchor {
+  color: inherit;
+}
+.fg-secondary {
+  color: var(--fg-secondary);
+}
+.empty {
+  color: var(--fg-secondary);
+  padding: var(--s-2xl);
+  text-align: center;
+}
+.view-foot {
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  margin: 0;
+  max-width: 80ch;
+}
+
+/* ---- footer ---- */
+/* Honest footer — two-column grid (provenance | disclosure) over a full-width
+   fine-print line. */
+.app-footer {
+  margin-top: var(--s-2xl);
+  padding-top: var(--s-md);
+  border-top: 1px solid var(--border);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-xl);
+  align-items: start;
+}
+.app-footer p {
+  margin: 0;
+  line-height: 1.5;
+}
+/* Cap the measure ONLY inside the columns — the fine-print line is a direct
+   footer child, so it never matches this and runs full width. */
+.footer-grid p {
+  max-width: 70ch;
+}
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+}
+.footer-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--accent);
+}
+.footer-fine {
+  opacity: 0.8;
+  font-size: 0.78rem;
+}
+@media (max-width: 800px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: var(--s-md);
+  }
+}
+
+/* ---- tablet breakpoint (Artificer --bp-tablet: 800px) ---- */
+@media (max-width: 800px) {
+  .app-shell {
+    /* minmax(0, 1fr), not a bare 1fr: bare `1fr` = minmax(auto, 1fr), whose auto
+       minimum refuses to shrink below the content's min-content — so a wide child
+       (a diagram pane) blows the single column past the viewport and the whole
+       page scrolls sideways. minmax(0, …) lets the column shrink and the child's
+       own overflow-x:auto take over. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .app-sidenav {
+    display: none;
+  }
+  .player-body {
+    grid-template-columns: 1fr;
+  }
+  .inspector {
+    position: static;
+  }
+  /* Shrink the diagram to the viewport (the LoopGraph SVG carries an explicit px
+     width); desktop keeps full size + .graph-pane's overflow scroll. */
+  .graph-pane svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .glossary-row {
+    grid-template-columns: 1fr;
+    gap: var(--s-xs);
+  }
+}

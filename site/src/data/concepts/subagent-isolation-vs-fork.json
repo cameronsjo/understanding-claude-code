@@ -1,0 +1,118 @@
+{
+  "concept": "subagent-isolation-vs-fork",
+  "displayName": "What Crosses the Boundary",
+  "cluster": "forks-branches",
+  "order": 3,
+  "tagline": "Into a fork: **everything**. Into a subagent: **only the prompt**. Back out of either: **only the final message**.",
+  "summary": "Forks and subagents differ in what flows **in**, but they are identical in what flows **out**. A fork starts with a **full copy of the parent's context**; a subagent starts with **its agent definition plus the prompt** and nothing else. In both cases, the only thing that ever crosses back to the parent is the child's **final message** — never its transcript, never its tool outputs, never its context.",
+  "sections": [
+    {
+      "heading": "Inbound: what the child starts with",
+      "body": [
+        "A **fork** begins life as a copy of its parent: same system prompt, same conversation history, same accumulated tool results. The prompt you pass it is **one more instruction on top of everything it already knows**.",
+        "A **subagent** begins from its **agent definition** — the system prompt and tool list configured for that agent type — plus the prompt you pass. The parent's conversation **does not exist** for it. If the subagent needs a file path, a constraint, or a decision the parent made, that information must be **written into the prompt**."
+      ]
+    },
+    {
+      "heading": "Outbound: what the parent gets back",
+      "body": [
+        "Both kinds of child return exactly one thing: their **final message**, delivered to the parent as a **tool result**. The child's tool calls, intermediate reasoning, file reads, and errors stay in the **child's context** and are discarded with it.",
+        "This is a feature, not a limitation: it's what makes delegation **context-cheap**. A fork can read fifty files and the parent's context grows by **one message** — the conclusion."
+      ]
+    },
+    {
+      "heading": "What never crosses (in either direction)",
+      "body": [
+        "The child's **transcript** is not appended to the parent's. The parent's **later turns** do not stream into a running child. And nothing the child does is **shown to the user directly** — the parent decides what to relay.",
+        "The one deliberate exception: a finished agent can be **continued by name or ID**, which reopens **its own** preserved context for follow-up — still without merging anything into the parent."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The boundary is asymmetric: **inbound** differs by child kind, **outbound** is the same minimal channel for both.",
+    "nodes": [
+      {
+        "id": "parent-context",
+        "label": "Parent context",
+        "kind": "context",
+        "note": "System prompt + full conversation + accumulated tool results. The parent's working memory."
+      },
+      {
+        "id": "spawn",
+        "label": "Spawn: fork or subagent?",
+        "kind": "decision",
+        "note": "The **subagent_type** parameter picks the inbound rule: copy everything, or start clean."
+      },
+      {
+        "id": "fork-context",
+        "label": "Fork: full copy",
+        "kind": "fork",
+        "note": "The fork's context **starts as a copy of the parent's** — then grows independently as the fork works."
+      },
+      {
+        "id": "subagent-context",
+        "label": "Subagent: definition + prompt",
+        "kind": "subagent",
+        "note": "The subagent's context starts with **its own system prompt** and **the prompt it was passed**. Nothing of the parent's conversation."
+      },
+      {
+        "id": "work",
+        "label": "Child works in its own context",
+        "kind": "tool",
+        "note": "Every tool call, file read, and intermediate step accumulates in the **child's** context window — invisible to the parent."
+      },
+      {
+        "id": "return",
+        "label": "Final message crosses back",
+        "kind": "terminal",
+        "note": "The **only** thing the parent receives. One message, delivered as a tool result. The child's context is not merged back."
+      }
+    ],
+    "edges": [
+      { "from": "parent-context", "to": "spawn" },
+      { "from": "spawn", "to": "fork-context", "on": "fork", "label": "copy all" },
+      { "from": "spawn", "to": "subagent-context", "on": "subagent", "label": "prompt only" },
+      { "from": "fork-context", "to": "work" },
+      { "from": "subagent-context", "to": "work" },
+      { "from": "work", "to": "return" },
+      { "from": "return", "to": "parent-context", "label": "final message only" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "boundary-via-fork",
+      "title": "Trace the boundary for a **fork**",
+      "steps": ["parent-context", "spawn", "fork-context", "work", "return", "parent-context"],
+      "note": "Inbound: **everything** (a copy). Outbound: **one message**. The fork's fifty file-reads cost the parent nothing."
+    },
+    {
+      "id": "boundary-via-subagent",
+      "title": "Trace the boundary for a **subagent**",
+      "steps": ["parent-context", "spawn", "subagent-context", "work", "return", "parent-context"],
+      "note": "Inbound: **only the prompt** — anything the subagent needs to know must be written into it. Outbound: the same **one message**."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "The parent can see what its subagent did — the transcript comes back with the result.",
+      "reality": "Only the **final message** returns. The subagent's transcript, tool outputs, and reasoning are **never** delivered to the parent.",
+      "why": "It feels like the work should be auditable from the parent. It is auditable — but in the child's own session log, not in the parent's context."
+    },
+    {
+      "myth": "A subagent can look things up in the parent's conversation if it needs to.",
+      "reality": "A subagent has **no access** to the parent's conversation, before or during its run. If it wasn't in the prompt, the subagent doesn't know it.",
+      "why": "Forks DO get the parent's conversation, so it's natural to assume subagents do too. The inbound rule is exactly what differs between them."
+    },
+    {
+      "myth": "When a fork finishes, its findings are merged back into the parent's context.",
+      "reality": "Nothing merges. The parent gets the fork's **final message** as a tool result and decides what to do with it — that's the entire hand-off.",
+      "why": "'Fork' suggests an eventual 'join'. There is a join, but it's one message wide."
+    }
+  ],
+  "related": ["agent-forks", "conversation-forks"],
+  "sources": [
+    { "label": "Claude Code subagents documentation", "ref": "https://docs.claude.com/en/docs/claude-code/sub-agents" },
+    { "label": "Agent tool description (Claude Code system prompt, 2.x)", "ref": "observed tool contract" },
+    { "label": "agentic-harnesses — Claude Code loop analysis", "ref": "https://cameronsjo.github.io/agentic-harnesses/" }
+  ]
+}

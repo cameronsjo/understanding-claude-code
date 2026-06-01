@@ -1,0 +1,97 @@
+{
+  "concept": "conversation-forks",
+  "displayName": "Conversation Forks",
+  "cluster": "forks-branches",
+  "order": 1,
+  "tagline": "Forking copies the transcript into a **new session** — the original is never touched.",
+  "summary": "A Claude Code session is a **transcript**: every message, tool call, and result, stored under a session ID. Forking that session makes a **full copy under a new ID**. The copy and the original then **diverge independently** — nothing you do in one ever shows up in the other.",
+  "sections": [
+    {
+      "heading": "Three ways back into a session",
+      "body": [
+        "**--continue** reopens your **most recent session** in place — same session ID, the transcript just keeps growing. **--resume** lets you **pick which session** to reopen (interactively or by ID); by default it also continues that session in place.",
+        "**--fork-session** changes what resume does: instead of growing the original, Claude Code **copies the transcript into a new session ID** and continues there. The original stays exactly as you left it — a safe point you can return to or fork again."
+      ]
+    },
+    {
+      "heading": "Rewind is time travel, not forking",
+      "body": [
+        "Inside a session, **rewind** (double-Escape or /rewind) jumps the conversation — and optionally your code — **back to an earlier checkpoint**. That rewrites where the session continues from, but it is still **one session, one transcript**. Forking creates a **second transcript**; rewinding moves within the one you have.",
+        "The two compose: rewind to the turn where things were still good, then **fork from there** to try a different approach while keeping the original line of work intact."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "One transcript, two ways to pick it back up: **in place** (it grows) or **as a copy** (the original is frozen and safe).",
+    "nodes": [
+      {
+        "id": "turns",
+        "label": "Conversation so far",
+        "kind": "session",
+        "note": "Every turn so far lives in **one transcript** under **one session ID** — this is the thing that gets continued or copied."
+      },
+      {
+        "id": "choice",
+        "label": "Pick it back up — how?",
+        "kind": "decision",
+        "note": "**--continue** grabs the most recent session; **--resume** lets you choose one. Adding **--fork-session** turns either into a **copy operation**."
+      },
+      {
+        "id": "in-place",
+        "label": "Same session grows",
+        "kind": "session",
+        "note": "Without forking, new turns are **appended to the original transcript**. There is still only **one session**."
+      },
+      {
+        "id": "forked",
+        "label": "Copy under a new session ID",
+        "kind": "fork",
+        "note": "**--fork-session** copies the whole transcript into a **new session ID**. New turns land in the **copy**."
+      },
+      {
+        "id": "two-sessions",
+        "label": "Two independent transcripts",
+        "kind": "terminal",
+        "note": "The fork and the original are now **fully independent**. Neither sees the other's new turns. The original is a **safe restore point**."
+      }
+    ],
+    "edges": [
+      { "from": "turns", "to": "choice" },
+      { "from": "choice", "to": "in-place", "on": "--continue / --resume" },
+      { "from": "choice", "to": "forked", "on": "--fork-session" },
+      { "from": "forked", "to": "two-sessions" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "continue-in-place",
+      "title": "Pick up the **most recent session** with --continue",
+      "steps": ["turns", "choice", "in-place"],
+      "note": "No copy is made. The session you left is the session you're in — **same ID, same transcript**, now longer."
+    },
+    {
+      "id": "fork-and-diverge",
+      "title": "Fork a session to **try something risky**",
+      "steps": ["turns", "choice", "forked", "two-sessions"],
+      "note": "The fork gets **everything the original had** at the moment of forking — then they **diverge**. Abandon the fork and the original is exactly as you left it."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "Forking a session keeps some link back to the original — work in the fork eventually shows up there too.",
+      "reality": "A fork is a **copy**, not a branch of a shared thing. From the moment of forking, the two transcripts are **completely independent** — no merging, no syncing, no link.",
+      "why": "Git trains you to expect branches to merge back. Conversation forks have no merge — the word 'fork' is doing different work here."
+    },
+    {
+      "myth": "--continue and --resume are interchangeable.",
+      "reality": "**--continue** always reopens the **most recent** session. **--resume** lets you **choose** which session — and is where **--fork-session** usually comes in.",
+      "why": "They feel the same when you only have one recent session. The difference appears the day you have several and continue grabs the wrong one."
+    }
+  ],
+  "related": ["agent-forks", "git-branches-vs-claude-forks"],
+  "sources": [
+    { "label": "Claude Code CLI reference (--continue, --resume, --fork-session)", "ref": "https://docs.claude.com/en/docs/claude-code/cli-reference" },
+    { "label": "Claude Code common workflows — resuming sessions", "ref": "https://docs.claude.com/en/docs/claude-code/common-workflows" },
+    { "label": "Checkpointing / rewind", "ref": "https://docs.claude.com/en/docs/claude-code/checkpointing" }
+  ]
+}

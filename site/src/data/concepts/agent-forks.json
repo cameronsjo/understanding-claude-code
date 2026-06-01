@@ -1,0 +1,117 @@
+{
+  "concept": "agent-forks",
+  "displayName": "Agent Forks vs Subagents",
+  "cluster": "forks-branches",
+  "order": 2,
+  "tagline": "One Agent tool, two behaviors: **omit subagent_type** and you get a fork of yourself; **set it** and you get an isolated specialist.",
+  "summary": "When Claude Code calls its **Agent tool**, a single parameter decides everything. With **subagent_type set**, it spawns a **subagent**: a separate agent with its own system prompt, its own tool list, and a **fresh, empty context**. With subagent_type **omitted**, it spawns a **fork**: a background copy of the calling agent that **inherits the entire conversation so far**. Same tool, opposite starting points.",
+  "sections": [
+    {
+      "heading": "The parameter that changes everything",
+      "body": [
+        "A **subagent** starts from its **agent definition** — a system prompt and tool list written for one job (a code reviewer, a test runner, an explorer). It knows **only what's in the prompt you pass it**. The conversation that led up to spawning it does not exist for it.",
+        "A **fork** starts from **everything**. It is the same agent, with the same conversation history, continuing in the background. You don't have to explain anything to it — it was, in every sense, **there for the whole conversation**."
+      ]
+    },
+    {
+      "heading": "Why fork instead of just doing the work?",
+      "body": [
+        "Two reasons: **parallelism** and **context protection**. A fork runs in the **background**, so the parent can keep working — or spawn several forks at once for independent subtasks.",
+        "And a fork's tool calls — file reads, searches, build output — **stay in the fork's context**. The parent receives only the fork's **final message**. Heavy exploration that would flood the parent's context window happens out-of-line, and only the conclusion comes back."
+      ]
+    },
+    {
+      "heading": "Continuing a spawned agent",
+      "body": [
+        "Both forks and subagents can be **continued** after they finish: messaging a completed agent by name or ID resumes it **with its context intact**. A **new** Agent call with a subagent_type, by contrast, always **starts fresh** — nothing carries over from the previous spawn."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The **subagent_type** parameter is the entire difference: omitted → fork (inherits everything); set → subagent (fresh start).",
+    "nodes": [
+      {
+        "id": "parent",
+        "label": "Parent conversation",
+        "kind": "session",
+        "note": "The main conversation — user messages, assistant turns, tool results. This is what a fork inherits and a subagent never sees."
+      },
+      {
+        "id": "agent-call",
+        "label": "Agent tool call",
+        "kind": "tool",
+        "note": "The parent decides to delegate: it calls the **Agent tool** with a prompt describing the work."
+      },
+      {
+        "id": "has-type",
+        "label": "subagent_type set?",
+        "kind": "decision",
+        "note": "**The fork-in-the-road.** This one parameter decides whether the child starts with **everything** or **nothing**."
+      },
+      {
+        "id": "fork",
+        "label": "Fork — inherits full context",
+        "kind": "fork",
+        "note": "A **copy of the parent**, conversation and all, running in the background. No prompt-writing needed to bring it up to speed — it already knows."
+      },
+      {
+        "id": "subagent",
+        "label": "Subagent — fresh context",
+        "kind": "subagent",
+        "note": "A **different agent**: its own system prompt (from the agent definition), its own tool restrictions, and an **empty context** except for the prompt it was passed."
+      },
+      {
+        "id": "result",
+        "label": "Final message returns",
+        "kind": "terminal",
+        "note": "Either way, only the child's **final message** comes back as the tool result. Its tool calls, file reads, and intermediate work stay in **its** context."
+      }
+    ],
+    "edges": [
+      { "from": "parent", "to": "agent-call" },
+      { "from": "agent-call", "to": "has-type" },
+      { "from": "has-type", "to": "fork", "on": "omitted" },
+      { "from": "has-type", "to": "subagent", "on": "specified" },
+      { "from": "fork", "to": "result" },
+      { "from": "subagent", "to": "result" },
+      { "from": "result", "to": "parent", "label": "tool result" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "spawn-a-fork",
+      "title": "Delegate background work to a **fork of yourself**",
+      "steps": ["parent", "agent-call", "has-type", "fork", "result", "parent"],
+      "note": "The fork **already knows the whole conversation** — the prompt only needs to say what to do next, not re-explain the context. Its exploration stays out of the parent's context window."
+    },
+    {
+      "id": "spawn-a-subagent",
+      "title": "Delegate a bounded task to a **specialist subagent**",
+      "steps": ["parent", "agent-call", "has-type", "subagent", "result", "parent"],
+      "note": "The subagent knows **only its agent definition and the prompt**. Everything it needs must be in that prompt — file paths, requirements, constraints. That's the cost of isolation, and also the point of it."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "The Agent tool always creates a fresh, isolated agent.",
+      "reality": "Only when **subagent_type is set**. Omit it and the spawned agent is a **fork** — it inherits the **full conversation context** of its parent.",
+      "why": "The tool is one tool with two modes, and the mode switch is a parameter you can simply not notice. This exact confusion motivated this site."
+    },
+    {
+      "myth": "A fork shares live state with the parent — what the parent learns next, the fork knows too.",
+      "reality": "A fork inherits the conversation **as of the moment it was spawned**. After that, parent and fork **diverge** — new parent context does not flow into the running fork.",
+      "why": "'Inherits full context' is easy to read as 'shares context'. It's a copy at spawn time, not a live link."
+    },
+    {
+      "myth": "The parent (and the user) can watch everything a fork or subagent does.",
+      "reality": "Children run in the **background**. The parent receives the **final message only**, as a tool result — and that message isn't even shown to the user unless the parent relays it.",
+      "why": "The work is real and the tools really run; it's the **visibility** that's scoped. What crosses the boundary is deliberately minimal."
+    }
+  ],
+  "related": ["subagent-isolation-vs-fork", "conversation-forks", "git-branches-vs-claude-forks"],
+  "sources": [
+    { "label": "Claude Code subagents documentation", "ref": "https://docs.claude.com/en/docs/claude-code/sub-agents" },
+    { "label": "Agent tool description (Claude Code system prompt, 2.x)", "ref": "observed tool contract" },
+    { "label": "agentic-harnesses — Claude Code loop analysis", "ref": "https://cameronsjo.github.io/agentic-harnesses/" }
+  ]
+}

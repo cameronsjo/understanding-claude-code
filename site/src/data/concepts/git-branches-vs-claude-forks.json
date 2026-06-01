@@ -1,0 +1,117 @@
+{
+  "concept": "git-branches-vs-claude-forks",
+  "displayName": "Git Branches vs Claude Forks",
+  "cluster": "forks-branches",
+  "order": 4,
+  "tagline": "Git branches the **files**; Claude forks the **conversation**. They are orthogonal axes — neither creates the other.",
+  "summary": "Two different things can be 'branched' while you work with Claude Code, and they live on **different axes**. Git branches and worktrees isolate the **filesystem**: which versions of which files are on disk. Claude forks (session forks, agent forks) isolate the **conversation**: which transcript the model is reasoning over. **Forking a conversation does not branch your git repo, and branching git does not fork your conversation.**",
+  "sections": [
+    {
+      "heading": "The filesystem axis",
+      "body": [
+        "A **git branch** is a movable pointer into your repo's history — switching branches changes which file versions are checked out. A **git worktree** goes further: it checks a branch out into its **own directory**, so two branches can be worked on **simultaneously** without switching back and forth.",
+        "Claude Code leans on worktrees for **parallel agent work**: spawning an agent with **worktree isolation** gives it a separate checkout to edit, so its file changes can't collide with the parent's. The conversation didn't branch — the **directory** did."
+      ]
+    },
+    {
+      "heading": "The conversation axis",
+      "body": [
+        "A **session fork** copies the transcript into a new session. An **agent fork** spawns a background copy of the agent with the conversation so far. Both produce a second, independent **line of reasoning** — and **neither touches a single file or git ref**.",
+        "Your working directory, staged changes, and current branch are **exactly the same** before and after a conversation fork. Only the transcript copied."
+      ]
+    },
+    {
+      "heading": "Combining the axes",
+      "body": [
+        "Real isolation for risky work often wants **both**: fork the conversation (so the original line of reasoning is safe) **and** put the work in a worktree (so the original checkout is safe). Each axis protects a different thing — the **thinking** and the **files**.",
+        "This is what agent worktree isolation does in one move: a background agent (conversation axis) working in its own checkout (filesystem axis)."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "One task, two independent isolation axes — pick either, or **combine them** for full isolation.",
+    "nodes": [
+      {
+        "id": "task",
+        "label": "Risky work ahead",
+        "kind": "session",
+        "note": "A refactor, an experiment, a destructive migration — something you may want to **walk away from cleanly**."
+      },
+      {
+        "id": "axis",
+        "label": "What needs protecting?",
+        "kind": "decision",
+        "note": "The **transcript** (your line of reasoning so far), the **files** (your working tree), or both."
+      },
+      {
+        "id": "conv-fork",
+        "label": "Conversation axis: fork the session",
+        "kind": "fork",
+        "note": "The transcript is copied; the original conversation is a **safe restore point**. **Git state is completely untouched.**"
+      },
+      {
+        "id": "git-worktree",
+        "label": "Filesystem axis: branch / worktree",
+        "kind": "git",
+        "note": "A branch (or a worktree directory) isolates **file changes**. **The conversation is completely untouched** — same transcript, same session."
+      },
+      {
+        "id": "both",
+        "label": "Fully isolated",
+        "kind": "terminal",
+        "note": "Forked conversation + separate worktree: abandoning the experiment costs **nothing on either axis**."
+      }
+    ],
+    "edges": [
+      { "from": "task", "to": "axis" },
+      { "from": "axis", "to": "conv-fork", "on": "the transcript" },
+      { "from": "axis", "to": "git-worktree", "on": "the files" },
+      { "from": "conv-fork", "to": "git-worktree", "on": "want both", "label": "add a worktree" },
+      { "from": "conv-fork", "to": "both" },
+      { "from": "git-worktree", "to": "both" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "isolate-the-conversation",
+      "title": "Protect the **line of reasoning** only",
+      "steps": ["task", "axis", "conv-fork", "both"],
+      "note": "Fork the session and experiment freely in the copy. Your **git state never changed** — there is nothing to clean up on disk if you abandon it (except any file edits the experiment itself made!)."
+    },
+    {
+      "id": "isolate-the-files",
+      "title": "Protect the **working tree** only",
+      "steps": ["task", "axis", "git-worktree", "both"],
+      "note": "Work on a branch or in a worktree. The **conversation is the same one** — if the experiment fails, the transcript still carries everything learned from it."
+    },
+    {
+      "id": "isolate-both",
+      "title": "Protect **both axes** for truly risky work",
+      "steps": ["task", "axis", "conv-fork", "git-worktree", "both"],
+      "note": "Fork the conversation **and** use a worktree. This is what agent **worktree isolation** packages into one move."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "Forking my Claude session creates a git branch (or at least a stash) to go with it.",
+      "reality": "A conversation fork copies the **transcript only**. Your git branch, working tree, and staged changes are **byte-for-byte identical** before and after.",
+      "why": "Both operations are called 'forking/branching' and both are about 'trying something safely' — but they protect **different things**."
+    },
+    {
+      "myth": "If Claude works in a git worktree, it gets a separate conversation for that worktree.",
+      "reality": "A worktree is **just a directory**. The conversation continues in the same transcript regardless of which directory the work happens in.",
+      "why": "Worktree isolation is usually mentioned alongside agent spawning, so the two isolations blur together — but they're separate decisions."
+    },
+    {
+      "myth": "Abandoning a forked conversation also rolls back the file edits made during it.",
+      "reality": "File edits are on the **filesystem axis** — they persist no matter what happens to any transcript. Rolling back files is git's job (or rewind's, when checkpointing is on).",
+      "why": "The transcript *describes* the edits, so discarding it feels like discarding them. The disk doesn't read transcripts."
+    }
+  ],
+  "related": ["conversation-forks", "agent-forks"],
+  "sources": [
+    { "label": "Claude Code common workflows — git worktrees", "ref": "https://docs.claude.com/en/docs/claude-code/common-workflows" },
+    { "label": "git-worktree documentation", "ref": "https://git-scm.com/docs/git-worktree" },
+    { "label": "Claude Code checkpointing / rewind", "ref": "https://docs.claude.com/en/docs/claude-code/checkpointing" }
+  ]
+}
