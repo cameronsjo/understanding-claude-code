@@ -448,7 +448,7 @@ body {
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   background: var(--urgent-fill);
-  color: var(--urgent);
+  color: var(--on-urgent);
 }
 .misconception__label--reality {
   background: var(--accent-fill);
