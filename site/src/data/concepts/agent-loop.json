@@ -1,0 +1,130 @@
+{
+  "concept": "agent-loop",
+  "displayName": "The Agent Loop",
+  "cluster": "agent-sdk",
+  "order": 1,
+  "status": "stable",
+  "tagline": "The loop **is** the SDK — the same `/v1/messages` endpoint, called in a loop with tool results threaded back. The model decides **what**; your code decides **whether** and **when to stop**.",
+  "summary": "The Claude Agent SDK is not a more powerful model or a special endpoint. It is the **plain Messages API call, placed in a loop**. The model reads your messages and tools and responds; if it wants a tool, it emits a `tool_use` **request**; **your code** runs it and threads the result back as a new message; the loop calls the model again. It ends when the model emits `end_turn`. The central truth: **the model never executes anything** — it only asks. Claude Code is this loop with permissions, rendering, and scheduling layered on top.",
+  "sections": [
+    {
+      "heading": "The loop is the SDK",
+      "body": [
+        "A single Messages API call is a **round trip**: you send `messages[]` plus your tool definitions, the model reads them and **responds once**. The agent SDK is **that same call, placed in a loop** — same model, same `/v1/messages` endpoint, called repeatedly with the growing conversation.",
+        "The SDK adds the **loop**, not new model power. Nothing about the model changes between a one-shot API call and an agentic run; what changes is that **your program keeps calling it**, feeding each response's consequences back in as the next request."
+      ]
+    },
+    {
+      "heading": "Two stop reasons, one branch",
+      "body": [
+        "Every model response carries a `stop_reason`, and for the agentic loop **one branch** carries the weight. `tool_use` means the model is **asking you to run something** — it has emitted a structured request and is waiting. `end_turn` means the model is **done** and control returns to your program. (The API also signals `max_tokens` and `stop_sequence`; those don't loop — they **exit** like `end_turn`, just for a different reason.)",
+        "The model **signals**; the loop **dispatches**. The framework picks no trajectory and decides no completion — it reads the flag the model set and either runs the requested tool or exits."
+      ]
+    },
+    {
+      "heading": "Dispatch is your code",
+      "body": [
+        "When the model requests a tool, **execution lives in the harness** — or in the SDK's tool runner — never in the model. Your code **validates** the arguments, **schedules** parallel calls, runs the tool, and appends the `tool_result` back into `messages`. The model only ever sees the **result**, never your filesystem or shell.",
+        "Because dispatch is yours, this is exactly where a **gate** can sit. This is *why* Claude Code's permission system can exist at all: the seam between `tool_use` and execution is **your code's to open**. Claude Code is this loop with **approval prompts, rendering, and scheduling** layered onto that seam — but the loop underneath is the plain one."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The model asks; **your code** runs. The backward arc from `append` to `model-call` is the loop — it closes once per tool call, however many turns it takes.",
+    "nodes": [
+      {
+        "id": "assemble",
+        "label": "Your `messages[]` + tool defs",
+        "kind": "context",
+        "note": "The request you build: the conversation so far plus the tool schemas you expose. This is what the model gets to read."
+      },
+      {
+        "id": "model-call",
+        "label": "SDK calls `/v1/messages`",
+        "kind": "session",
+        "note": "One round trip. The model reads the context and the tools and responds. It runs nothing — it only emits text and tool-use requests."
+      },
+      {
+        "id": "decide",
+        "label": "`stop_reason`?",
+        "kind": "decision",
+        "note": "`tool_use` → the model wants a tool. `end_turn` → it's done. This single flag is the only branch the loop checks."
+      },
+      {
+        "id": "run-tool",
+        "label": "Harness runs the tool",
+        "kind": "tool",
+        "note": "**Your** code executes here — gate, validate, or reject. The model only *requested* the tool; it never touches your shell, FS, or network."
+      },
+      {
+        "id": "append",
+        "label": "Append `tool_result` to `messages`",
+        "kind": "context",
+        "note": "The output is threaded back as a new message. The model never saw your filesystem — only this result, which now joins the conversation."
+      },
+      {
+        "id": "return",
+        "label": "`end_turn` → control returns",
+        "kind": "terminal",
+        "note": "The final message crosses back to your program. The loop exits — no more model calls until you start the next turn."
+      }
+    ],
+    "edges": [
+      { "from": "assemble", "to": "model-call" },
+      { "from": "model-call", "to": "decide" },
+      { "from": "decide", "to": "run-tool", "on": "stop_reason == tool_use", "label": "tool_use" },
+      { "from": "decide", "to": "return", "on": "stop_reason == end_turn", "label": "end_turn" },
+      { "from": "run-tool", "to": "append" },
+      { "from": "append", "to": "model-call", "label": "loop back" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "turn-with-tool",
+      "title": "A turn that **calls a tool**",
+      "steps": ["assemble", "model-call", "decide", "run-tool", "append", "model-call"],
+      "note": "The loop closes: the result is appended and the model is called again. Fifty tool calls in a turn is still **one loop**, run fifty times."
+    },
+    {
+      "id": "turn-that-finishes",
+      "title": "A turn that **finishes**",
+      "steps": ["model-call", "decide", "return"],
+      "note": "`end_turn` is the exit. The model's final message crosses back to your program and the loop stops — no tool ran this trip."
+    },
+    {
+      "id": "intercepting",
+      "title": "**Intercepting** a tool call",
+      "steps": ["model-call", "decide", "run-tool"],
+      "note": "Dispatch is yours, so `run-tool` is the seam: gate, approve, or reject here. This is exactly where Claude Code's permission system sits."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "Giving Claude tools means Claude runs them.",
+      "reality": "The model emits `tool_use` **requests**; your code — or the SDK's tool runner — **executes** them and feeds results back. The model never touches your shell, filesystem, or network.",
+      "why": "The transcript reads as if 'Claude ran `ls`' — the request and its result sit side by side, so the dispatch step in between is invisible."
+    },
+    {
+      "myth": "The Agent SDK is a different, more powerful endpoint than the plain API.",
+      "reality": "It's the **same `/v1/messages`** call. The SDK is a **loop around it** — the same model, called repeatedly with the conversation growing each pass.",
+      "why": "'Agent' sounds like a product or a model upgrade. It's an **orchestration pattern**: the loop is the only thing the SDK adds."
+    },
+    {
+      "myth": "The SDK decides when the agent is done.",
+      "reality": "The **model** signals completion via `end_turn`. The loop just **reads the flag** and either dispatches a tool or exits — it picks no trajectory.",
+      "why": "It feels like the framework 'runs' the agent. It's a **dispatcher**; the model drives, the loop only checks one flag and acts on it."
+    },
+    {
+      "myth": "Tool calls execute automatically — there's no gate.",
+      "reality": "Because dispatch is **in your code**, every call is **interceptable**: gate it behind approval, validate the arguments, or reject it outright before it runs.",
+      "why": "The SDK tool runner's convenience hides that the **seam is yours to open** — it auto-runs by default, so the gate looks like it isn't there."
+    }
+  ],
+  "related": ["subagent-isolation-vs-fork", "agent-forks"],
+  "sources": [
+    { "label": "Anthropic Messages API — tool use & stop_reason (the loop)", "ref": "https://docs.claude.com/en/docs/build-with-claude/tool-use" },
+    { "label": "Anthropic SDK — tool runner (@beta_tool / betaZodTool / manual agentic loop)", "ref": "https://github.com/anthropics/anthropic-sdk-python" },
+    { "label": "agentic-harnesses — Claude Code loop analysis (sibling repo)", "ref": "https://cameronsjo.github.io/agentic-harnesses/" },
+    { "label": "Framing: loop mechanics are documented fact; the 'Claude Code is this loop' mapping is a clearly-framed reconstruction." }
+  ]
+}

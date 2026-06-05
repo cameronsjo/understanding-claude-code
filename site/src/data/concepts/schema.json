@@ -15,7 +15,7 @@
     "displayName": { "type": "string" },
     "cluster": {
       "type": "string",
-      "enum": ["forks-branches", "hooks", "subagents", "context", "extensibility", "permissions", "mcp"],
+      "enum": ["agent-sdk", "forks-branches", "hooks", "subagents", "context", "extensibility", "permissions", "mcp"],
       "description": "Which concept cluster this belongs to. Drives sidenav grouping; new clusters need a CLUSTER_LABEL entry in types.ts."
     },
     "tagline": {

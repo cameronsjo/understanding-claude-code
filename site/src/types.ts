@@ -66,6 +66,7 @@ export const KIND_LABEL: Record<NodeKind, string> = {
 // ---- Concept spec (mirrors site/src/data/concepts/schema.json) ----
 
 export type Cluster =
+  | 'agent-sdk'
   | 'forks-branches'
   | 'hooks'
   | 'subagents'
@@ -124,6 +125,7 @@ export interface ConceptSpec {
 }
 
 export const CLUSTER_LABEL: Record<Cluster, string> = {
+  'agent-sdk': 'Agent SDK',
   'forks-branches': 'Forks & branches',
   subagents: 'Subagents',
   context: 'Context',
@@ -135,6 +137,7 @@ export const CLUSTER_LABEL: Record<Cluster, string> = {
 
 /** Canonical sidenav / index ordering of clusters. Empty clusters don't render. */
 export const CLUSTER_ORDER: Cluster[] = [
+  'agent-sdk',
   'forks-branches',
   'subagents',
   'context',
