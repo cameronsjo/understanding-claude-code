@@ -53,7 +53,7 @@
         "id": "git-worktree",
         "label": "Filesystem axis: branch / worktree",
         "kind": "git",
-        "note": "A branch (or a worktree directory) isolates **file changes**. **The conversation is completely untouched** — same transcript, same session."
+        "note": "A branch (or a worktree directory) isolates **file changes**. **The conversation is completely untouched** — same transcript, same session. Agents take a worktree via **isolation: \"worktree\"**, and Claude Code can now **switch between managed worktrees mid-session**."
       },
       {
         "id": "both",
@@ -112,6 +112,7 @@
   "sources": [
     { "label": "Claude Code common workflows — git worktrees", "ref": "https://docs.claude.com/en/docs/claude-code/common-workflows" },
     { "label": "git-worktree documentation", "ref": "https://git-scm.com/docs/git-worktree" },
-    { "label": "Claude Code checkpointing / rewind", "ref": "https://docs.claude.com/en/docs/claude-code/checkpointing" }
+    { "label": "Claude Code checkpointing / rewind", "ref": "https://docs.claude.com/en/docs/claude-code/checkpointing" },
+    { "label": "Claude Code CHANGELOG 2.1.157 — EnterWorktree can switch between Claude-managed worktrees mid-session", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" }
   ]
 }

@@ -109,7 +109,7 @@
       "why": "'Fork' suggests an eventual 'join'. There is a join, but it's one message wide."
     }
   ],
-  "related": ["agent-forks", "conversation-forks"],
+  "related": ["agent-forks", "conversation-forks", "background-agents", "dynamic-workflows"],
   "sources": [
     { "label": "Claude Code subagents documentation", "ref": "https://docs.claude.com/en/docs/claude-code/sub-agents" },
     { "label": "Agent tool description (Claude Code system prompt, 2.x)", "ref": "observed tool contract" },

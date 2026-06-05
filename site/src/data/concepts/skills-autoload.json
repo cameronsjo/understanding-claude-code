@@ -1,0 +1,124 @@
+{
+  "concept": "skills-autoload",
+  "displayName": "Skills Auto-Load",
+  "cluster": "extensibility",
+  "order": 1,
+  "status": "stable",
+  "tagline": "Drop a skill into **`.claude/skills/`** and it loads — **no marketplace**, no restart, and it can even **remove** tools.",
+  "summary": "Extending Claude Code with a skill used to feel like packaging: build a plugin, register a marketplace, install it. Now a skill placed under **`.claude/skills/`** is **automatically loaded — no marketplace required**. **`/reload-skills`** re-scans the directories **without restarting** the session, so a skill you just added is usable immediately. And a skill (or slash command) isn't only additive: its frontmatter can set **`disallowed-tools`** to **remove tools** from the model while it's active.",
+  "sections": [
+    {
+      "heading": "No marketplace in the path",
+      "body": [
+        "The friction people remember is the **distribution chain**: author a plugin, publish it to a marketplace, install and pin it. For a local skill that's all overhead.",
+        "Skills in **`.claude/skills/`** are now **discovered directly** — auto-loaded with **no marketplace required**. (`claude plugin init <name>` scaffolds one in place.) The directory *is* the registry; presence is registration."
+      ]
+    },
+    {
+      "heading": "Re-scan without restarting",
+      "body": [
+        "Add or edit a skill and you don't have to bounce the session. **`/reload-skills`** re-scans the skill directories **in place**, so the new or changed skill is picked up mid-conversation.",
+        "This pairs with hooks: a **SessionStart** hook can return `reloadSkills: true` to trigger the same re-scan automatically. Either way, the skill set is a **live, reloadable** thing — not frozen at launch."
+      ]
+    },
+    {
+      "heading": "Skills can subtract, too",
+      "body": [
+        "A skill's most surprising lever is **removal**. Frontmatter can declare **`disallowed-tools`**, and while that skill or slash command is active those tools are **taken away from the model**.",
+        "So a skill isn't only \"here's a new capability.\" It can also be \"for this task, **narrow** the surface\" — dropping write access, or a risky tool, for the duration. Extensibility runs in **both directions**."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "Presence in `.claude/skills/` is registration. `/reload-skills` re-scans live; `disallowed-tools` lets an active skill **remove** tools.",
+    "nodes": [
+      {
+        "id": "drop",
+        "label": "Place a skill in .claude/skills/",
+        "kind": "git",
+        "note": "A skill file on disk under `.claude/skills/`. No marketplace, no install step — the directory is the registry."
+      },
+      {
+        "id": "scan",
+        "label": "Directories auto-scanned",
+        "kind": "decision",
+        "note": "Claude Code scans the skill directories at startup — and on demand — discovering whatever is present **without marketplace registration**."
+      },
+      {
+        "id": "loaded",
+        "label": "Skill loaded & available",
+        "kind": "context",
+        "note": "The skill is now invocable. Getting here took only a file in the right place."
+      },
+      {
+        "id": "active",
+        "label": "Invoked → frontmatter applies",
+        "kind": "session",
+        "note": "When the skill runs, its frontmatter takes effect — including any tool restrictions it declares for the duration."
+      },
+      {
+        "id": "disallowed",
+        "label": "disallowed-tools removes tools",
+        "kind": "tool",
+        "note": "Frontmatter can **subtract**: listed tools are removed from the model while this skill or command is active. Extensibility that narrows, not only widens."
+      },
+      {
+        "id": "reload",
+        "label": "/reload-skills re-scans",
+        "kind": "tool",
+        "note": "Re-scan the directories **without restarting** the session — pick up a just-added skill mid-conversation. A SessionStart hook's `reloadSkills` does the same automatically."
+      }
+    ],
+    "edges": [
+      { "from": "drop", "to": "scan" },
+      { "from": "scan", "to": "loaded" },
+      { "from": "loaded", "to": "active", "on": "invoked" },
+      { "from": "active", "to": "disallowed", "label": "frontmatter applies" },
+      { "from": "disallowed", "to": "reload", "on": "added a skill?" },
+      { "from": "reload", "to": "scan", "label": "re-scan, no restart" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "drop-and-load",
+      "title": "Drop a skill and it **loads** — no marketplace",
+      "steps": ["drop", "scan", "loaded", "active"],
+      "note": "A file under `.claude/skills/` is discovered and invocable. The whole distribution chain collapses to \"put it in the directory.\""
+    },
+    {
+      "id": "narrow-the-surface",
+      "title": "A skill **removes** tools while active",
+      "steps": ["active", "disallowed"],
+      "note": "`disallowed-tools` in frontmatter takes tools away from the model for the duration — a skill scoping *down* the surface, not only adding to it."
+    },
+    {
+      "id": "reload-mid-session",
+      "title": "Pick up a new skill with **/reload-skills**",
+      "steps": ["disallowed", "reload", "scan", "loaded", "active"],
+      "note": "Re-scan in place — no restart. A SessionStart hook returning `reloadSkills` triggers the same path automatically."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "A skill has to be packaged in a plugin and registered in a marketplace to be usable.",
+      "reality": "Skills in **`.claude/skills/`** are auto-loaded — **no marketplace required**. Presence in the directory is registration.",
+      "why": "Marketplaces are how shared plugins are distributed, so it's natural to assume they're the only path. For local skills the directory scan is enough."
+    },
+    {
+      "myth": "Adding or editing a skill means restarting the session.",
+      "reality": "**`/reload-skills`** re-scans the skill directories **without a restart**, and a SessionStart hook can trigger the same re-scan via `reloadSkills`.",
+      "why": "Most config is read once at launch, so a skill set feels frozen. Here it's explicitly reloadable mid-session."
+    },
+    {
+      "myth": "A skill can only add capability — more tools, more commands.",
+      "reality": "A skill or slash command can set **`disallowed-tools`** to **remove** tools from the model while it's active. Extensibility runs both ways.",
+      "why": "\"Extension\" implies addition. The subtractive direction — narrowing the surface for a task — is easy to overlook but just as real."
+    }
+  ],
+  "related": ["hooks-talk-back", "dynamic-workflows"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.157 — skills in .claude/skills auto-loaded, no marketplace; `claude plugin init`", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.152 — /reload-skills; disallowed-tools in skill/command frontmatter", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code skills documentation", "ref": "https://docs.claude.com/en/docs/claude-code/skills" }
+  ]
+}
