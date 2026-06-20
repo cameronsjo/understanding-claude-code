@@ -1,0 +1,118 @@
+{
+  "concept": "dynamic-workflows",
+  "displayName": "Dynamic Workflows",
+  "cluster": "subagents",
+  "order": 1,
+  "status": "stable",
+  "tagline": "A workflow is a **deterministic script** that orchestrates **model-driven agents** — the control flow is code, the work is still Claude.",
+  "summary": "The **Workflow tool** runs a JavaScript script that fans work out across many subagents. The split is the whole idea: the **script** decides the control flow — what runs in parallel, what pipelines, how many times to loop — **deterministically**, while each spawned **agent** stays model-driven inside its step. So `agent()`, `parallel()`, and `pipeline()` are not prompts; they are **orchestration primitives** the script calls. Workflows are **opt-in** — Claude doesn't reach for one unless you ask.",
+  "sections": [
+    {
+      "heading": "Two layers, two kinds of decision",
+      "body": [
+        "Driving the model directly, **Claude decides the fan-out** turn by turn: whether to spawn an agent, how many, in what order. That is flexible but **non-deterministic** — re-run it and the shape can change.",
+        "A workflow moves the shape into a **script**. `parallel()` is a barrier that runs thunks at once and waits for all of them; `pipeline()` streams each item through every stage with **no barrier between stages**; `agent()` spawns one subagent and returns its result. The script's loops and conditionals are **plain code** — they run the same way every time. Only what happens *inside* each `agent()` call is left to the model."
+      ]
+    },
+    {
+      "heading": "Why encode the orchestration",
+      "body": [
+        "Three reasons a script beats ad-hoc spawning: **scale** (fan out to tens or hundreds of agents a single context could never hold), **structure** (a verify stage that adversarially checks every finding before it's trusted), and **repeatability** (the same script plus the same inputs runs the same way).",
+        "The agents still do model work — reading, judging, writing — but the **harness around them is deterministic**. You can read each phase's result and decide the next phase, staying in the loop between fan-outs."
+      ]
+    },
+    {
+      "heading": "Opt-in by design",
+      "body": [
+        "Workflows can spawn **dozens of agents** and burn a lot of tokens, so Claude treats them as **explicit opt-in** — you ask for one (\"use a workflow\", \"fan out agents\"), or a skill invokes it. Running `/workflows` shows live progress of the runs.",
+        "This is the inverse of normal delegation: with the **Agent tool** Claude decides when to delegate; with the Workflow tool **you** decide to orchestrate, and the script decides the rest."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The **script** is deterministic orchestration; the **agents** inside each step stay model-driven. Control flow is code; the work is Claude.",
+    "nodes": [
+      {
+        "id": "ask",
+        "label": "You ask for a workflow",
+        "kind": "session",
+        "note": "Workflows are **opt-in**. Claude runs one only when you ask for orchestration or a skill invokes it — not on its own initiative."
+      },
+      {
+        "id": "script",
+        "label": "Workflow script (JS)",
+        "kind": "tool",
+        "note": "A JavaScript script calling **orchestration primitives** — agent(), parallel(), pipeline(), loops, conditionals. This layer is **deterministic**: same script + same input, same shape."
+      },
+      {
+        "id": "fanout",
+        "label": "parallel() / pipeline() fan-out",
+        "kind": "decision",
+        "note": "The script decides the shape: **parallel()** is a barrier (run all, await all); **pipeline()** streams items through stages with no barrier between them."
+      },
+      {
+        "id": "agents",
+        "label": "agent() spawns subagents",
+        "kind": "subagent",
+        "note": "Each agent() call spawns one **model-driven subagent** with its own fresh context. The script controls *when* and *how many*; the model controls *what happens inside*."
+      },
+      {
+        "id": "synthesize",
+        "label": "Collect & synthesize results",
+        "kind": "context",
+        "note": "Agents return structured results to the script, which filters, dedupes, or verifies them — **plain code**, not a model call — before the next phase."
+      },
+      {
+        "id": "report",
+        "label": "Workflow returns",
+        "kind": "terminal",
+        "note": "The orchestrated result comes back. Run **/workflows** to watch progress live across the fan-out."
+      }
+    ],
+    "edges": [
+      { "from": "ask", "to": "script", "on": "opt-in" },
+      { "from": "script", "to": "fanout" },
+      { "from": "fanout", "to": "agents", "label": "spawn" },
+      { "from": "agents", "to": "synthesize", "label": "results" },
+      { "from": "synthesize", "to": "fanout", "on": "another phase", "label": "loop" },
+      { "from": "synthesize", "to": "report" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "fan-out-review",
+      "title": "Fan out a review across many files **deterministically**",
+      "steps": ["ask", "script", "fanout", "agents", "synthesize", "report"],
+      "note": "The script's pipeline() shape is fixed; only each reviewer agent's judgement is model-driven. Re-running spawns the **same structure** of work."
+    },
+    {
+      "id": "loop-until-dry",
+      "title": "Loop a discovery phase until it stops finding things",
+      "steps": ["ask", "script", "fanout", "agents", "synthesize", "fanout"],
+      "note": "The **loop is in the script** — a while-condition in plain code. The agents inside each round are still Claude; the stopping rule is deterministic."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "A workflow is just a saved prompt or a macro.",
+      "reality": "A workflow is a **JavaScript script** that calls orchestration primitives. It runs real control flow — parallel(), pipeline(), loops — not a stored block of text.",
+      "why": "\"Workflow\" sounds like a saved recipe. Here it's executable orchestration code, and the agents it spawns do the open-ended work."
+    },
+    {
+      "myth": "The model decides the fan-out inside a workflow.",
+      "reality": "The **script** decides the fan-out — how many agents, in parallel or pipelined, how many rounds. The model only decides what happens **inside** each agent() call.",
+      "why": "Outside a workflow, Claude does choose when to spawn agents. A workflow deliberately moves that choice into deterministic code — that's the entire point of it."
+    },
+    {
+      "myth": "Claude will spin up a workflow whenever a task looks parallelizable.",
+      "reality": "Workflows are **opt-in**. Because one can spawn dozens of agents and spend heavily, Claude runs a workflow only when you explicitly ask or a skill invokes it.",
+      "why": "Other delegation (the Agent tool) is Claude's call, so it's natural to assume orchestration is too. The cost profile makes workflows the exception."
+    }
+  ],
+  "related": ["background-agents", "agent-forks", "subagent-isolation-vs-fork"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.147 — dynamic workflows introduced", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.154 — /workflows, orchestration in the background", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Workflow tool contract (observed: agent/parallel/pipeline primitives, opt-in)", "ref": "observed tool contract" }
+  ]
+}

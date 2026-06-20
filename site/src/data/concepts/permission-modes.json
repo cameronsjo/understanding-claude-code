@@ -1,0 +1,117 @@
+{
+  "concept": "permission-modes",
+  "displayName": "Permission Modes",
+  "cluster": "permissions",
+  "order": 1,
+  "status": "stable",
+  "tagline": "Modes aren't an on/off allowlist — they're a **dial** for **how much Claude asks** before it acts.",
+  "summary": "Claude Code runs in one of a handful of **permission modes**, and they form a **spectrum of autonomy** rather than a binary switch. At one end, **plan** mode proposes and acts on nothing. In the middle, **default** asks before risky actions and **acceptEdits** stops asking about file edits while still gating execution. Toward the far end, **dontAsk** and **auto** proceed with little or no prompting, and **bypassPermissions** removes the gate entirely. The mode doesn't change *what tools exist* — it changes **how often you're asked**.",
+  "sections": [
+    {
+      "heading": "A dial, not a toggle",
+      "body": [
+        "The intuition that breaks is \"permissions are an allowlist — a tool is either allowed or it isn't.\" The mode is better read as a **dial**: turn it down and Claude **asks about almost everything**; turn it up and it **asks about almost nothing**. Allowlists still exist, but the mode sets the **baseline posture**.",
+        "The same Agent and tool surface is available across modes. What shifts is the **friction**: how many actions stop to confirm with you first."
+      ]
+    },
+    {
+      "heading": "The stops along the dial",
+      "body": [
+        "**plan** — Claude reasons and proposes; it does not edit, run, or change state. **default** — it asks before **risky** actions (writes, commands), acting freely only on safe reads. **acceptEdits** — it stops asking about ordinary **file edits**, but still **re-prompts before writes that grant code execution**.",
+        "**auto** — it runs autonomously, with a **classifier** still deciding what's safe to do unattended. **dontAsk** — it suppresses prompts and proceeds with **nothing in the way**. **bypassPermissions** — the gate is **removed**; nothing is asked. The exact rank of these high-autonomy modes is **approximate** — the direction, less and less asking, is the point."
+      ]
+    },
+    {
+      "heading": "Picking a point on the dial",
+      "body": [
+        "The right mode is a function of **trust and blast radius**. Exploratory or destructive work wants a **low** setting (plan, default) where you stay in the loop. Repetitive, well-understood work tolerates a **high** setting (acceptEdits, auto) so you're not rubber-stamping every edit.",
+        "Two high settings are **not** the same: **auto** keeps a classifier in the loop deciding what's safe; **bypassPermissions** keeps **nothing** in the loop. Reaching for the highest setting by default is how people get surprised."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The modes form a dial from **asks about everything** (plan) to **asks about nothing** (bypassPermissions). Turning it up trades confirmations for momentum.",
+    "nodes": [
+      {
+        "id": "plan",
+        "label": "plan — proposes, acts on nothing",
+        "kind": "decision",
+        "note": "The low end of the dial. Claude reasons and proposes a plan; it makes **no edits and runs nothing** until you approve."
+      },
+      {
+        "id": "default",
+        "label": "default — asks before risky actions",
+        "kind": "decision",
+        "note": "Acts freely on safe reads, but **stops to confirm** writes and commands. The everyday balance point."
+      },
+      {
+        "id": "acceptedits",
+        "label": "acceptEdits — auto-accepts edits",
+        "kind": "tool",
+        "note": "Stops asking about ordinary **file edits** — but still **re-prompts before writes that grant code execution** (shell rc files, build configs)."
+      },
+      {
+        "id": "auto",
+        "label": "auto — autonomous, classifier-gated",
+        "kind": "session",
+        "note": "Runs unattended, with a **classifier** deciding what's safe to do without asking. A **guard is still in the loop** — so it asks (and blocks) more than the modes past it."
+      },
+      {
+        "id": "dontask",
+        "label": "dontAsk — suppresses prompts",
+        "kind": "tool",
+        "note": "Proceeds with **little prompting** and no classifier in the way. The exact rank of the high-autonomy modes is **approximate** — what matters is the direction."
+      },
+      {
+        "id": "bypass",
+        "label": "bypassPermissions — no gate",
+        "kind": "terminal",
+        "note": "The high end: the permission gate is **removed**. Nothing is asked. Maximum momentum, zero confirmation."
+      }
+    ],
+    "edges": [
+      { "from": "plan", "to": "default", "label": "turn it up" },
+      { "from": "default", "to": "acceptedits", "label": "turn it up" },
+      { "from": "acceptedits", "to": "auto", "label": "turn it up" },
+      { "from": "auto", "to": "dontask", "label": "turn it up" },
+      { "from": "dontask", "to": "bypass", "label": "turn it up" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "plan-first",
+      "title": "Stay in the loop: **plan, then ease the dial up**",
+      "steps": ["plan", "default", "acceptedits"],
+      "note": "Start where nothing happens without approval, then loosen to auto-accept edits once you trust the direction — still gated on execution-granting writes."
+    },
+    {
+      "id": "turn-it-up",
+      "title": "Trade confirmations for momentum on trusted work",
+      "steps": ["acceptedits", "auto", "dontask", "bypass"],
+      "note": "Each step up removes a class of prompt. Note the gap between **auto** (a classifier still decides) and **dontAsk / bypass**, where less and less is judging."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "Permission modes are an allowlist — each tool is just on or off.",
+      "reality": "Modes are a **graduated dial** for how much Claude asks before acting. They set the baseline posture; allowlists are a separate, finer-grained layer.",
+      "why": "\"Permission\" sounds binary. But the modes range from proposes-nothing (plan) to asks-nothing (bypass), with several stops between."
+    },
+    {
+      "myth": "acceptEdits means it never asks about anything again.",
+      "reality": "acceptEdits auto-accepts **ordinary file edits**, but still **re-prompts before writes that grant code execution** — shell startup files, build-tool configs.",
+      "why": "\"Accept edits\" reads as total. The carve-out exists because some edits are really a way to run arbitrary code on the next shell or build."
+    },
+    {
+      "myth": "auto and bypassPermissions are the same \"do anything\" mode.",
+      "reality": "**bypassPermissions** removes the gate entirely — nothing is consulted. **auto** keeps a **classifier** in the loop deciding what's safe to do unattended.",
+      "why": "Both feel like \"full autonomy,\" so they blur. The difference is whether *anything* is still judging each action — and that difference is the whole safety margin."
+    }
+  ],
+  "related": ["acceptedits-config-prompts", "auto-mode-classifier"],
+  "sources": [
+    { "label": "Claude Code permission modes (observed: Agent/AskUserQuestion mode enum — plan, default, acceptEdits, bypassPermissions, dontAsk, auto)", "ref": "observed tool contract" },
+    { "label": "Claude Code IAM / permissions documentation", "ref": "https://docs.claude.com/en/docs/claude-code/iam" },
+    { "label": "Claude Code CHANGELOG 2.1.154 — auto mode no longer requires opt-in consent", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" }
+  ]
+}

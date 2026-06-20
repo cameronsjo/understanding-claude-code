@@ -108,7 +108,7 @@
       "why": "The work is real and the tools really run; it's the **visibility** that's scoped. What crosses the boundary is deliberately minimal."
     }
   ],
-  "related": ["subagent-isolation-vs-fork", "conversation-forks", "git-branches-vs-claude-forks"],
+  "related": ["subagent-isolation-vs-fork", "conversation-forks", "git-branches-vs-claude-forks", "background-agents", "dynamic-workflows"],
   "sources": [
     { "label": "Claude Code subagents documentation", "ref": "https://docs.claude.com/en/docs/claude-code/sub-agents" },
     { "label": "Agent tool description (Claude Code system prompt, 2.x)", "ref": "observed tool contract" },

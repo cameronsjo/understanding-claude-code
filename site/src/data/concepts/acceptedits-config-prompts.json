@@ -1,0 +1,117 @@
+{
+  "concept": "acceptedits-config-prompts",
+  "displayName": "The acceptEdits Carve-Out",
+  "cluster": "permissions",
+  "order": 2,
+  "status": "stable",
+  "tagline": "acceptEdits auto-accepts edits — except writes that **grant code execution**, which it stops to **re-confirm**.",
+  "summary": "In **acceptEdits** mode, ordinary file edits apply without asking. But some writes aren't really \"just edits\": writing a **shell startup file** or a **build-tool config** means code runs the **next time a shell opens or a build runs**. So acceptEdits carves out an exception — it **re-prompts before writes that grant execution**, even though it's auto-accepting everything else. The boundary isn't the file's size or location; it's whether the write **buys arbitrary code execution later**.",
+  "sections": [
+    {
+      "heading": "Not all edits are equal",
+      "body": [
+        "Auto-accepting a change to a source file is **low-stakes**: the code runs only when you choose to run it. Auto-accepting a change to **`.zshenv`** is different — that file is **sourced by the next shell**, so the edit is effectively \"run this on my behalf, soon, without me looking.\"",
+        "acceptEdits draws the line exactly there. Editing application code: **accepted silently**. Editing a file whose **mere presence causes execution**: **stop and ask**."
+      ]
+    },
+    {
+      "heading": "What trips the prompt",
+      "body": [
+        "Two families trip it. **Shell startup files** — `.zshenv`, `.zlogin`, `.bash_login` and kin — run on the next shell. **Build-tool config files that grant code execution** — things like `.npmrc`, `.bazelrc`, `.pre-commit-config.yaml`, or a `.devcontainer/` setup — run on the next install, build, commit, or container start.",
+        "The unifying test is **deferred execution**: does writing this file hand future code a way to run **without another prompt**? If yes, acceptEdits re-confirms; the auto-accept doesn't cover it."
+      ]
+    },
+    {
+      "heading": "A safety boundary, not a bug",
+      "body": [
+        "It can look like acceptEdits \"broke\" — you asked it not to prompt, and it prompted anyway. It's deliberate: the carve-out keeps an attacker (or an honest mistake) from turning **one auto-accepted edit** into **persistent code execution** on your machine.",
+        "Read the extra prompt as the mode doing its job: the **blast radius** of an execution-granting write is large enough that even acceptEdits wants you to look."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "acceptEdits routes every write through one question: **does this grant code execution later?** If yes, it re-prompts despite auto-accept.",
+    "nodes": [
+      {
+        "id": "write",
+        "label": "acceptEdits wants to write a file",
+        "kind": "tool",
+        "note": "The mode is auto-accepting edits. A write is about to happen without a prompt — unless the next check says otherwise."
+      },
+      {
+        "id": "classify",
+        "label": "Does this write grant execution?",
+        "kind": "decision",
+        "note": "The real test: not size or path, but whether the file's **presence causes code to run later** — on the next shell, install, build, commit, or container."
+      },
+      {
+        "id": "ordinary",
+        "label": "Ordinary file → accepted",
+        "kind": "terminal",
+        "note": "Source code, docs, data. The edit runs only when **you** choose to run it, so acceptEdits applies it **silently**."
+      },
+      {
+        "id": "execconfig",
+        "label": "Execution-granting config",
+        "kind": "git",
+        "note": "A shell rc (`.zshenv`, `.bash_login`) or build config (`.npmrc`, `.pre-commit-config.yaml`, `.devcontainer/`). Writing it arms **deferred execution**."
+      },
+      {
+        "id": "prompt",
+        "label": "Re-prompt for confirmation",
+        "kind": "decision",
+        "note": "Despite acceptEdits, Claude **stops and asks** — the carve-out for writes that buy code execution without a further prompt."
+      },
+      {
+        "id": "applied",
+        "label": "Write applied after approval",
+        "kind": "terminal",
+        "note": "Only after you confirm does the execution-granting write land. The boundary held; you looked before it armed."
+      }
+    ],
+    "edges": [
+      { "from": "write", "to": "classify" },
+      { "from": "classify", "to": "ordinary", "on": "ordinary file" },
+      { "from": "classify", "to": "execconfig", "on": "grants execution" },
+      { "from": "execconfig", "to": "prompt" },
+      { "from": "prompt", "to": "applied", "on": "approve" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "ordinary-accepted",
+      "title": "An ordinary edit is **accepted silently**",
+      "steps": ["write", "classify", "ordinary"],
+      "note": "Source files run only when you run them, so acceptEdits applies the change with no prompt — exactly what the mode promises."
+    },
+    {
+      "id": "config-reprompts",
+      "title": "A config write **re-prompts** despite acceptEdits",
+      "steps": ["write", "classify", "execconfig", "prompt", "applied"],
+      "note": "Writing `.zshenv` or `.pre-commit-config.yaml` arms code that runs later, so the carve-out stops to confirm before it lands."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "acceptEdits means no more prompts, period.",
+      "reality": "It auto-accepts ordinary edits but **re-prompts before writes that grant code execution** — shell startup files and build-tool configs.",
+      "why": "\"Accept edits\" sounds absolute. The exception is invisible until you edit a file that happens to run itself later."
+    },
+    {
+      "myth": "The prompt is about file location or size — system paths, big diffs.",
+      "reality": "It's about **deferred execution**: whether the file's presence causes code to run on the next shell, install, build, or commit. A tiny `.npmrc` trips it; a huge source file doesn't.",
+      "why": "We're used to permission boundaries being about *where* a file is. Here it's about *what writing it sets in motion*."
+    },
+    {
+      "myth": "Only `~/.zshrc`-style shell files are protected.",
+      "reality": "Build-tool configs that grant execution are covered too — `.npmrc`, `.bazelrc`, `.pre-commit-config.yaml`, `.devcontainer/` and similar — not just shell rc files.",
+      "why": "Shell rc files are the obvious vector, so the build-time ones are easy to forget — but a pre-commit hook or devcontainer runs code just as readily."
+    }
+  ],
+  "related": ["permission-modes", "auto-mode-classifier"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.160 — prompt before writing shell startup files (.zshenv, .zlogin, .bash_login)", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.160 — acceptEdits prompts before writing build-tool config files that grant code execution", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Specific config-file list (.npmrc/.bazelrc/.pre-commit-config.yaml/.devcontainer) is illustrative of the \"grants execution\" class, not a verbatim changelog enumeration", "ref": "reconstructed from the 2.1.160 behavior" }
+  ]
+}

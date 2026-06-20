@@ -1,0 +1,112 @@
+{
+  "concept": "background-agents",
+  "displayName": "Background Agents",
+  "cluster": "subagents",
+  "order": 2,
+  "status": "stable",
+  "tagline": "Detached work isn't a live thread you watch — it runs **out-of-line** and **notifies on completion**.",
+  "summary": "Claude Code can run work **detached** from the foreground turn. A forked agent runs in the **background** so the parent keeps going; a shell command can run as a **background session** you attach to and detach from; and a whole session can be launched headless with `claude --bg --exec`. The common thread: detached work is **not a live feed**. Its tool output stays **out of the parent's context**, and you get a **completion notification**, not a window into every step.",
+  "sections": [
+    {
+      "heading": "Foreground vs detached",
+      "body": [
+        "In the **foreground**, every tool call and its output land in the current turn — you see them as they happen. **Detached** execution breaks that coupling: the work proceeds **independently**, and the parent is free to keep working instead of blocking on it.",
+        "This is the same machinery as an **agent fork**: a fork \"runs in the background\" precisely so its heavy exploration doesn't stall — or flood — the parent. Background execution generalizes that to shell commands and to entire sessions."
+      ]
+    },
+    {
+      "heading": "The surfaces",
+      "body": [
+        "**Pinned background sessions** (`Ctrl+T` in `claude agents`) stay alive when idle and are restarted in place to apply updates. Typing **`! <command>`** runs a shell command as a background session you can **attach to and detach from**. And **`claude --bg --exec '<command>'`** launches a detached session headlessly from the start.",
+        "In every case the contract is the same as a fork's: the detached worker's intermediate tool output **does not stream into the parent's context**. What crosses back is a **result and a notification** — not a live transcript."
+      ]
+    },
+    {
+      "heading": "Notification, not a feed",
+      "body": [
+        "The mental model that breaks is \"a background agent is a second thread I can watch scroll by.\" It is **detached**: you are told when it **finishes** (and can attach to inspect it), but you are not subscribed to every step in real time.",
+        "That's a feature — it's what keeps a long, tool-heavy job from **drowning the parent's context window**. The parent stays lean; the conclusion arrives when it's ready."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "Detached work runs **out-of-line**. Its tool output stays in its own context; the parent gets a **notification**, not a live feed.",
+    "nodes": [
+      {
+        "id": "parent",
+        "label": "Foreground session",
+        "kind": "session",
+        "note": "The turn you're in. Foreground tool calls and their output land here, visible as they happen."
+      },
+      {
+        "id": "launch",
+        "label": "Foreground or detached?",
+        "kind": "decision",
+        "note": "Run inline (output in this turn), or **detach** it: a background fork, a `! <command>` session, or `claude --bg --exec`."
+      },
+      {
+        "id": "detached",
+        "label": "Detached worker",
+        "kind": "fork",
+        "note": "Runs **independently** of the foreground turn. Pinned sessions (Ctrl+T) survive idle; `! <command>` sessions can be attached and detached."
+      },
+      {
+        "id": "work",
+        "label": "Tool output stays out-of-line",
+        "kind": "tool",
+        "note": "Every read, search, and build runs in the **worker's** context — it does **not** stream into the parent's context window."
+      },
+      {
+        "id": "notify",
+        "label": "Completion notification",
+        "kind": "terminal",
+        "note": "The parent is **notified when the work finishes** — not subscribed to every step. You can attach to inspect the result."
+      }
+    ],
+    "edges": [
+      { "from": "parent", "to": "launch" },
+      { "from": "launch", "to": "detached", "on": "detach" },
+      { "from": "detached", "to": "work" },
+      { "from": "detached", "to": "notify", "on": "headless", "label": "skip the live work view" },
+      { "from": "work", "to": "notify" },
+      { "from": "notify", "to": "parent", "label": "notify on completion" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "detach-and-keep-working",
+      "title": "Detach a long job and **keep working** in the foreground",
+      "steps": ["parent", "launch", "detached", "work", "notify", "parent"],
+      "note": "The parent doesn't block. The worker's tool output never floods the foreground context — only the **completion notification** arrives."
+    },
+    {
+      "id": "bg-exec-headless",
+      "title": "Launch a headless session with **--bg --exec**",
+      "steps": ["parent", "launch", "detached", "notify"],
+      "note": "`claude --bg --exec '<command>'` starts the session detached from the outset — no foreground turn to watch it scroll."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "A background agent is a live parallel thread I can watch scroll by.",
+      "reality": "It's **detached**. You get a **completion notification** and can attach to inspect it — you are not subscribed to every step as it happens.",
+      "why": "\"Running in parallel\" suggests a second live feed. The point of detaching is to keep the parent's context clean, so the steps are deliberately out-of-line."
+    },
+    {
+      "myth": "A background agent's tool output ends up in my main conversation.",
+      "reality": "The detached worker's reads, searches, and build output stay in **its own context**. The parent receives the result, not the intermediate output.",
+      "why": "It's the same boundary a fork has — heavy exploration is hidden on purpose so it can't drown the parent's context window."
+    },
+    {
+      "myth": "Closing or moving on from the foreground turn kills the background work.",
+      "reality": "Detached sessions run **independently** — pinned background sessions (Ctrl+T) even stay alive when idle and restart in place to apply updates.",
+      "why": "Foreground tool output is coupled to the turn, so it feels like everything is. Detaching is exactly what decouples the work's lifetime from the turn."
+    }
+  ],
+  "related": ["dynamic-workflows", "agent-forks", "conversation-forks", "auto-mode-classifier", "subagent-isolation-vs-fork"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.147 — pinned background sessions (Ctrl+T in claude agents) stay alive when idle, restarted in place to apply updates", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.154 — `! <command>` background sessions; `claude --bg --exec`", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Agent tool contract (observed: forks run in the background, output kept out of parent context)", "ref": "observed tool contract" }
+  ]
+}

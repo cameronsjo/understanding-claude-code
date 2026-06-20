@@ -1,0 +1,118 @@
+{
+  "concept": "hooks-talk-back",
+  "displayName": "Hooks Talk Back",
+  "cluster": "hooks",
+  "order": 1,
+  "status": "stable",
+  "tagline": "A hook isn't fire-and-forget — its **structured JSON return** re-enters the session and **steers** it.",
+  "summary": "It's tempting to think a hook just **runs a script and its output is logged**. Increasingly, the opposite is true: a hook returns **structured JSON** that **re-enters the session** and changes what happens next. `SessionStart` can ask Claude to **re-scan skills** or **set the session title**. `Stop` and `SubagentStop` can return **additionalContext** to feed Claude more and **continue the turn**. A `MessageDisplay` hook can **transform or hide** assistant text as it's shown. The return value is a **channel back in**, not a log line.",
+  "sections": [
+    {
+      "heading": "Two channels out of a hook",
+      "body": [
+        "Every hook has the obvious channel: an **exit code** that can **allow or block** the thing it fired on. That's the fire-and-forget model — run, succeed or veto, done.",
+        "The second channel is **structured JSON** on stdout. When a hook returns a recognized shape (often under `hookSpecificOutput`), Claude Code **reads it and acts on it**. The hook stops being a gate and becomes a **participant** in the turn."
+      ]
+    },
+    {
+      "heading": "What the return can do",
+      "body": [
+        "**SessionStart** can return `reloadSkills: true` to **re-scan skill directories**, or set the **session title** via `hookSpecificOutput.sessionTitle` on startup and resume. **Stop** and **SubagentStop** can return `hookSpecificOutput.additionalContext` to **give Claude feedback** and keep the turn going instead of ending it.",
+        "A **MessageDisplay** hook reaches the rendering layer: it can **transform or hide** assistant message text as it is displayed. Each of these is a different **re-entry point** — startup, turn-end, and display — and each takes a different shape of return."
+      ]
+    },
+    {
+      "heading": "Why this changes how you write hooks",
+      "body": [
+        "If you treat a hook as a script whose output vanishes, you'll **discard the most useful channel**. The return value is **load-bearing**: a malformed or empty return is a missed chance to inject context, rescan skills, retitle, or shape display.",
+        "Design a hook around its **return contract**, not just its side effects. The exit code says *whether*; the JSON says *what to do next*."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "A hook has two channels: an exit code (allow/block) and a **structured JSON return** that re-enters the session and steers it.",
+    "nodes": [
+      {
+        "id": "event",
+        "label": "Lifecycle event fires",
+        "kind": "session",
+        "note": "SessionStart, Stop, SubagentStop, MessageDisplay, and friends. Each is a **re-entry point** where a hook can speak back in."
+      },
+      {
+        "id": "hook",
+        "label": "Hook script runs",
+        "kind": "tool",
+        "note": "Your script executes with the event's payload on stdin. It can do work — and, crucially, it can **return something**."
+      },
+      {
+        "id": "exit-only",
+        "label": "Exit code only → logged",
+        "kind": "terminal",
+        "note": "The fire-and-forget path: succeed or **block**, output logged, nothing else changes. This is the model people assume is the whole story."
+      },
+      {
+        "id": "json-return",
+        "label": "Structured JSON returned",
+        "kind": "decision",
+        "note": "A recognized shape — `reloadSkills`, `sessionTitle`, `additionalContext`, hide/transform — under `hookSpecificOutput`. The second, richer channel."
+      },
+      {
+        "id": "reenter",
+        "label": "Return value re-enters the session",
+        "kind": "context",
+        "note": "Claude Code **reads** the JSON and applies it: feeding context back, rescanning skills, retitling, or reshaping display."
+      },
+      {
+        "id": "steer",
+        "label": "Session behavior changes",
+        "kind": "session",
+        "note": "Skills re-scanned · title set · turn **continued** via additionalContext · message hidden or transformed. The hook **steered** the session, it didn't just observe it."
+      }
+    ],
+    "edges": [
+      { "from": "event", "to": "hook" },
+      { "from": "hook", "to": "exit-only", "on": "exit code only" },
+      { "from": "hook", "to": "json-return", "on": "structured JSON" },
+      { "from": "json-return", "to": "reenter" },
+      { "from": "reenter", "to": "steer" },
+      { "from": "steer", "to": "event", "label": "continues the turn" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "fire-and-forget",
+      "title": "The model people assume: **fire and forget**",
+      "steps": ["event", "hook", "exit-only"],
+      "note": "The hook runs, succeeds or blocks, and its output is logged. Real — but only half the surface, and the less powerful half."
+    },
+    {
+      "id": "talk-back",
+      "title": "The hook **talks back** and steers the turn",
+      "steps": ["event", "hook", "json-return", "reenter", "steer"],
+      "note": "A Stop hook returns additionalContext; Claude reads it and keeps going. A SessionStart hook returns reloadSkills; the skill set is rescanned mid-session."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "A hook just runs a script — its output is logged and ignored.",
+      "reality": "A hook can return **structured JSON** that Claude Code reads and acts on: rescanning skills, setting the title, injecting context, reshaping display.",
+      "why": "Most shell tooling treats stdout as a log. Hooks treat a recognized return shape as **instructions**, which is easy to miss until you rely on it."
+    },
+    {
+      "myth": "A hook's only power is allow-or-block via its exit code.",
+      "reality": "Beyond block/allow, the JSON return is a **data channel back into the session** — `additionalContext` to continue a turn, `reloadSkills`, `sessionTitle`, message transform/hide.",
+      "why": "Permission-style hooks made the exit code the famous lever, so the richer return channel stays invisible until you read the newer events."
+    },
+    {
+      "myth": "Once a turn stops, a hook can't make Claude keep working.",
+      "reality": "**Stop** and **SubagentStop** hooks can return `hookSpecificOutput.additionalContext` to give Claude feedback and **continue the turn**.",
+      "why": "\"Stop\" sounds terminal. The hook fires *at* the stop, and its return can reopen the turn rather than just observing the end of it."
+    }
+  ],
+  "related": ["skills-autoload", "permission-modes"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.152 — SessionStart reloadSkills + sessionTitle; MessageDisplay hook event", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.165 — Stop/SubagentStop return hookSpecificOutput.additionalContext", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code hooks documentation", "ref": "https://docs.claude.com/en/docs/claude-code/hooks" }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "concept": "auto-mode-classifier",
+  "displayName": "The Auto-Mode Classifier",
+  "cluster": "permissions",
+  "order": 3,
+  "status": "draft",
+  "tagline": "Auto mode's classifier reads **only the agent's message text** — so an approval you typed in chat is **invisible** to it.",
+  "summary": "When auto (or background) mode decides whether an action is safe to take unattended, a **classifier** makes the call — and it reads a **narrow input**: the agent's own **message text**. It does **not** read tool output, subagent reports, or your **AskUserQuestion answers**. The consequence catches people: you can approve something in the conversation and the classifier **still blocks it**, because the approval never lived in the one channel it reads. The fix is to route the grant through your own authority — a **`!`-prefixed command** — rather than retrying the tool call.",
+  "sections": [
+    {
+      "heading": "A narrow window",
+      "body": [
+        "Auto mode runs without per-action consent (it **no longer requires opt-in**). To stay safe it leans on a **classifier** that judges each action. The non-obvious part is **what the classifier can see**: the agent's **message text**, and that's the load-bearing input.",
+        "It does **not** ingest tool results, the reports a subagent hands back, or the answers you pick in an **AskUserQuestion** prompt. Those are real and they happened — they're just **outside the classifier's window**."
+      ]
+    },
+    {
+      "heading": "Why your approval doesn't land",
+      "body": [
+        "When you confirm a sensitive operation in conversation — \"yes, edit the ACL\", \"go ahead, log in\" — that consent lives in the **dialogue**, not in the agent's next message text in a form the classifier recognizes as authorization. So the classifier, reading only the message text, **never sees the approval** and keeps **blocking** the grant.",
+        "This is why production grants (ACL edits, logins, vault scans, self-modifying config) can be blocked **repeatedly even after you've said yes**. The retry loops because each retry presents the classifier the same window — and the approval still isn't in it."
+      ]
+    },
+    {
+      "heading": "Route around it, don't fight it",
+      "body": [
+        "The working move is to stop feeding the classifier and use **your own authority**: run the blocked grant via a **`!`-prefixed in-session command**, which executes as **you**, not as a tool call the classifier must clear.",
+        "Read this as a **boundary**, not a bug: the classifier is intentionally conservative about a small input rather than trusting a chat transcript it can't fully verify. Knowing its window tells you where to apply the override."
+      ]
+    }
+  ],
+  "diagram": {
+    "caption": "The classifier reads **only the agent's message text**. Approvals in other channels never reach it — so route the grant through your own `!` command.",
+    "nodes": [
+      {
+        "id": "agent-message",
+        "label": "Agent's message text",
+        "kind": "session",
+        "note": "The **only** input the classifier reads. Whatever the agent says here is what gets judged."
+      },
+      {
+        "id": "invisible",
+        "label": "Tool output · subagent reports · AskUserQuestion answers",
+        "kind": "context",
+        "note": "All real, all present in the session — and all **outside the classifier's window**. Your in-chat approval lives here, where the classifier can't see it."
+      },
+      {
+        "id": "classifier",
+        "label": "Safety classifier",
+        "kind": "decision",
+        "note": "Judges the action from the **message text alone**. It cannot consult the channels where your approval actually lives."
+      },
+      {
+        "id": "verdict",
+        "label": "Safe to do unattended?",
+        "kind": "decision",
+        "note": "Routine actions pass. A **sensitive grant** (ACL edit, login, vault scan, self-config) fails — the approval that would clear it was never in the window."
+      },
+      {
+        "id": "blocked",
+        "label": "Grant blocked — repeatedly",
+        "kind": "terminal",
+        "note": "Retrying the tool call presents the **same window**, so it blocks again. The loop isn't stubbornness; the approval simply isn't an input."
+      },
+      {
+        "id": "route-bang",
+        "label": "Route via `!`-prefixed command",
+        "kind": "tool",
+        "note": "Run the grant under **your** authority with a `!` command instead of a tool call. It executes as you — bypassing the classifier's narrow window entirely."
+      }
+    ],
+    "edges": [
+      { "from": "agent-message", "to": "classifier", "on": "read", "label": "the only input" },
+      { "from": "invisible", "to": "classifier", "on": "not read", "label": "never reaches it" },
+      { "from": "classifier", "to": "verdict" },
+      { "from": "verdict", "to": "blocked", "on": "sensitive grant" },
+      { "from": "blocked", "to": "route-bang", "label": "workaround" }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "the-trap",
+      "title": "A grant is **blocked despite a yes** in chat",
+      "steps": ["agent-message", "classifier", "verdict", "blocked"],
+      "note": "The classifier judged the message text, found a sensitive grant, and blocked — the approval you typed was never an input to the decision."
+    },
+    {
+      "id": "route-around",
+      "title": "Why the approval is invisible — and how to route around it",
+      "steps": ["invisible", "classifier", "verdict", "blocked", "route-bang"],
+      "note": "Your consent lived in AskUserQuestion answers / dialogue — outside the window. Stop retrying the tool call; run the grant via a `!` command."
+    }
+  ],
+  "misconceptions": [
+    {
+      "myth": "If I approve the action in chat, auto mode will proceed.",
+      "reality": "The classifier reads **only the agent's message text**. Your in-conversation approval lives in channels it doesn't read, so the grant keeps getting blocked.",
+      "why": "We assume anything said in the session is \"in context\" for every decision. The classifier's input is deliberately narrower than the conversation."
+    },
+    {
+      "myth": "The classifier weighs tool output and subagent reports when judging safety.",
+      "reality": "It reads neither — nor AskUserQuestion answers. Only the agent's message text feeds the decision.",
+      "why": "A rich session feels like a shared context. But the classifier is a small, conservative gate over one input, not a reader of the whole transcript."
+    },
+    {
+      "myth": "Auto mode pauses to ask for consent before sensitive operations.",
+      "reality": "Auto mode **no longer requires opt-in consent**; a classifier gates actions instead — and because it reads only message text, sensitive grants are best routed through a `!`-prefixed command.",
+      "why": "Earlier autonomy was consent-gated, so the habit lingers. Now the gate is a classifier, and the override point moved with it."
+    }
+  ],
+  "related": ["permission-modes", "acceptedits-config-prompts", "background-agents"],
+  "sources": [
+    { "label": "Claude Code CHANGELOG 2.1.154 — auto mode no longer requires opt-in consent", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Claude Code CHANGELOG 2.1.158 — auto mode on Bedrock/Vertex/Foundry (Opus 4.7/4.8)", "ref": "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md" },
+    { "label": "Observed classifier behavior (reads agent message text only; not tool output, subagent reports, or AskUserQuestion answers) — reconstructed, marked draft", "ref": "observed behavior; not official documentation" }
+  ]
+}
