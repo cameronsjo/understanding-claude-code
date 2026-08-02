@@ -139,40 +139,53 @@ export function App() {
         <ConceptNav nav={nav} onSelect={selectNav} />
       </aside>
 
-      {/* Honest footer: provenance | disclosure side by side, full-width fine print below. */}
-      <footer className="app-footer">
-        <div className="footer-grid">
-          <section className="footer-col">
-            <span className="footer-label">Sourced</span>
-            <p>
-              <b className="anchor">Independent &amp; unofficial.</b> Concept explanations are derived from the
-              public Claude Code documentation, observed tool behavior, and the sibling{' '}
-              <a className="repo-link" href="https://cameronsjo.github.io/agentic-harnesses/" target="_blank" rel="noreferrer">
-                agentic-harnesses
-              </a>{' '}
-              source analysis. Claude Code moves fast — details can drift out of date; each concept cites its sources.
-            </p>
-          </section>
-          <section className="footer-col">
-            <span className="footer-label">Disclosure</span>
-            <p>
-              Built with the{' '}
-              <a className="repo-link" href="https://cameronsjo.github.io/artificer/" target="_blank" rel="noreferrer">
-                <b className="anchor">Artificer design system</b>
-              </a>
-              , React + Vite. Written by — and with — Claude Code itself, by a practitioner who got caught by these
-              exact concepts. Spot an error?{' '}
+      {/* Colophon: three-zone Artificer shape — sourced/disclosure grid, identity spine, trademark fine print. */}
+      <footer className="colophon">
+        <div className="container">
+          <div className="grid-auto">
+            <section>
+              <span className="colophon__label">Sourced</span>
+              <p>
+                <b className="anchor">Independent &amp; unofficial.</b> Concept explanations are derived from the
+                public Claude Code documentation, observed tool behavior, and the sibling{' '}
+                <a className="repo-link" href="https://cameronsjo.github.io/agentic-harnesses/" target="_blank" rel="noreferrer">
+                  agentic-harnesses
+                </a>{' '}
+                source analysis. Claude Code moves fast — details can drift out of date; each concept cites its sources.
+              </p>
+            </section>
+            <section>
+              <span className="colophon__label">Disclosure</span>
+              <p>
+                Built with the{' '}
+                <a className="repo-link" href="https://cameronsjo.github.io/artificer/" target="_blank" rel="noreferrer">
+                  <b className="anchor">Artificer design system</b>
+                </a>
+                , React + Vite. Written by — and with — Claude Code itself, by a practitioner who got caught by these
+                exact concepts. Spot an error?{' '}
+                <a className="repo-link" href="https://github.com/cameronsjo/understanding-claude-code/issues" target="_blank" rel="noreferrer">
+                  Open an issue
+                </a>
+                .
+              </p>
+            </section>
+          </div>
+          <div className="colophon__spine">
+            <span>&copy; {new Date().getFullYear()} Cameron Sjo</span>
+            <span data-whimsy-greeting data-whimsy-greeting-class="whimsy--glacial">
+              kindness is a choice.
+            </span>
+            <nav className="cluster">
               <a className="repo-link" href="https://github.com/cameronsjo/understanding-claude-code/issues" target="_blank" rel="noreferrer">
                 Open an issue
               </a>
-              .
-            </p>
-          </section>
+            </nav>
+          </div>
+          <p className="colophon__fine">
+            No affiliation with, sponsorship by, or endorsement from Anthropic. Claude and Claude Code are trademarks
+            of Anthropic, PBC.
+          </p>
         </div>
-        <p className="footer-fine">
-          No affiliation with, sponsorship by, or endorsement from Anthropic. Claude and Claude Code are trademarks of
-          Anthropic, PBC.
-        </p>
       </footer>
     </div>
   )
