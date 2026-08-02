@@ -186,8 +186,8 @@ body {
 .node-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-xs);
 }
 .node-kind {
   font-size: 0.75rem;
@@ -223,6 +223,10 @@ body {
   text-align: center;
   padding: 2px 11px 2px 14px;
   font-family: var(--font-mono);
+  /* Raw px, not var(--t-label-sm-size): this label lives inside a foreignObject
+     sized by LoopGraph's fixed-px node geometry (NODE_W/NODE_H), which does not
+     scale with the root type-scale. Tokenizing the font-size would grow the text
+     against a box that stays the same size and overflow it. */
   font-size: 12px;
   line-height: 1.12;
   color: var(--dia-node-fg);
@@ -445,7 +449,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: 2px var(--s-sm);
   border-radius: var(--radius-sm);
   background: var(--urgent-fill);
   color: var(--on-urgent);
@@ -487,7 +491,7 @@ body {
   padding-left: 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s-xs);
   font-family: var(--font-sans);
   font-size: 0.85rem;
   color: var(--fg-secondary);
