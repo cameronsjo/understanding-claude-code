@@ -16,6 +16,11 @@ concept pages, interactive diagrams, and a glossary from JSON concept specs.
   Add a concept by dropping a JSON here; no nav edits needed. Clusters appear when
   they have content.
 - `site/public/artificer/` — vendored Artificer design system (CSS + `<script>` helpers).
+  **Generated, not hand-edited.** Re-vendor with `npx @cameronsjo/artificer vendor --fonts
+  --dest site/public/artificer` (the package is a `site/` devDependency). `provenance.json`
+  records the source version and a sha256 per file — a hand-edit breaks it and is
+  overwritten on the next re-vendor. Fixes belong upstream in artificer-design-system;
+  local divergences go in `docs/artificer-adaptations.md`.
 - `docs/` — methodology, plans.
 - The diagram/player engine (`LoopGraph.tsx`, `GraphModal.tsx`, `player.ts`, `controls.tsx`,
   `Anchored.tsx`) is **shared verbatim with the sibling repos** (agentic-harnesses,
