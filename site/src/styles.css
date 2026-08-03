@@ -591,55 +591,15 @@ body {
 }
 
 /* ---- footer ---- */
-/* Honest footer — two-column grid (provenance | disclosure) over a full-width
-   fine-print line. */
-.app-footer {
-  margin-top: var(--s-2xl);
-  padding-top: var(--s-md);
-  border-top: 1px solid var(--border);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-md);
-}
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-xl);
-  align-items: start;
-}
-.app-footer p {
-  margin: 0;
-  line-height: 1.5;
-}
-/* Cap the measure ONLY inside the columns — the fine-print line is a direct
-   footer child, so it never matches this and runs full width. */
-.footer-grid p {
-  max-width: 70ch;
-}
-.footer-col {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-xs);
-}
+/* Main footer is now the Artificer .colophon primitive (see App.tsx) — no
+   hand-rolled rules needed there. .footer-label survives here for the
+   unrelated .concept-sources footer in ConceptPage.tsx. */
 .footer-label {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
   color: var(--accent);
-}
-.footer-fine {
-  opacity: 0.8;
-  font-size: 0.78rem;
-}
-@media (max-width: 800px) {
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: var(--s-md);
-  }
 }
 
 /* ---- tablet breakpoint (Artificer --bp-tablet: 800px) ---- */

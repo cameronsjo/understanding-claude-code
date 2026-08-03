@@ -3,6 +3,19 @@
 How this project bends the Artificer design system, and why. Each entry mirrors a
 feedback issue filed upstream.
 
+## 2026-08-02 — Upgrade 0.21.0 → 0.22.0, adopt the `.colophon__spine` footer
+
+Replaced the hand-rolled `.app-footer` / `.footer-grid` / `.footer-col` / `.footer-fine`
+rules with the Artificer three-zone `.colophon` primitive (zone 1: `.grid-auto` of
+labeled sections; zone 2: `.colophon__spine` — identity, sign-off, links; zone 3:
+`.colophon__fine`). This site keeps all three zones — it's the only sibling site using
+the full shape. The existing Sourced/Disclosure content and the trademark clause carry
+over verbatim; the site gains a copyright line and, for the first time, a
+`kindness is a choice.` sign-off (a deliberate owner decision, not a prior omission).
+
+`.footer-label` in `site/src/styles.css` stays — it's still used by the unrelated
+`.concept-sources` footer in `ConceptPage.tsx`, which is not part of the colophon.
+
 ## 2026-06-01 — Initial scaffold (upstream: artificer-design-system#127)
 
 | type | token / rule / pattern | what we did + why | upstream? |

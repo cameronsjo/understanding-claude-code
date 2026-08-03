@@ -1,8 +1,8 @@
 {
   "source": "cameronsjo/artificer",
-  "version": "0.21.0",
+  "version": "0.22.1",
   "resolvedFrom": "node_modules/@cameronsjo/artificer/package.json",
-  "vendoredAt": "2026-08-02T18:47:29.518Z",
+  "vendoredAt": "2026-08-02T23:13:40.948Z",
   "files": {
     "artificer-editorial.css": "a1427b59d067bd44ddce0144afeb8ccd681cf3e7e35a8e808476a3730b8de7e6",
     "artificer-focus.js": "4d3c0e830d653ba6329af19909ecedad61c39df58f5646470b2a4748a54b416b",
@@ -13,8 +13,8 @@
     "artificer-theme.js": "6c74ae83b3478e0d7c53ba75aa7b1f20aa150d2f5517f675a1c9afc304d3d671",
     "artificer-tree.js": "77f206ac0f513ccfdfe08f579b3969d416b51408613f801521e0291686685181",
     "artificer-whimsy.css": "b625da56dd8ce248e759767695ab76157ebc463487196532ef696fcd1d3b7936",
-    "artificer-whimsy.js": "f7a68c03fea2b653e9edec0a1ffe5c0c81bc1394727beea616ae67959ad3dbd1",
-    "artificer.css": "cab20d2b0b08c91be7ed74e161aa9c9efc6d41928a412860ba589c72161e884e",
+    "artificer-whimsy.js": "e7156e5369267b5d6f1982bd74f5ae92e7ed68cda36b78c5d9a1b984cccf4198",
+    "artificer.css": "a1d35045e309708e4223cfdacbfe4e85ef4231d662ecf1131b73e075e40d40ca",
     "assets/fonts/ia-writer-quattro-400-italic.woff2": "3e23501bf4389baca37c696fb7485fb43dbfdb6b91d75183e6739c2d5aae801d",
     "assets/fonts/ia-writer-quattro-400.woff2": "c8d49e112617397e4565fdd3d2c3b725ffacd0dc52ef18254785aa3d6c1ec1ae",
     "assets/fonts/ia-writer-quattro-700-italic.woff2": "11eba6b87f6a1c3521b30bb6fabdc7b60344ff5130096ef492989f6a6f1413af",
@@ -28,8 +28,8 @@
     "assets/fonts/jetbrains-mono-400.woff2": "14425ba9c695763c1547f48a206b7aa60350a33ae23de09f0407877f3fcd89eb",
     "assets/fonts/jetbrains-mono-500.woff2": "cb182feeed4d798ff6961d3c79f7026279448fca0676438aaecb21f3fc39553a",
     "assets/fonts/jetbrains-mono-700.woff2": "d0d4e818808f2a0ba39b2b09d1989366f63494e295f003c7ef436697378507e8",
-    "primitives.json": "9d48eb44758757ce779ebf7d0177f4add60030ef8a4cf6398c47b8dbc8a09441",
+    "primitives.json": "8a54d69e31a7a51f0c182e42fb69a5b928cf0de08dfe0fcbf84538a553c798ab",
     "print.css": "5626d042b576f9f987f7a95154e6a6b4da45b51f0bcf468918359625ad02946f",
-    "tokens.json": "dffc586ab568d07b23cd6ec767513676930bed7584bf3ab9d1b6e1f75c431c14"
+    "tokens.json": "899946f91e487a8cb615ad297dc225ccdaefd0d113a5afa9fa13d9d38445ee58"
   }
 }
