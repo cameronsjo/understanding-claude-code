@@ -47,6 +47,13 @@ export function App() {
   // re-hydrates and watches for inserted nodes so those icons aren't blank.
   useEffect(() => window.ArtificerIcons?.observe(), [])
 
+  // Same shape, same reason, for the colophon sign-off: Whimsy binds its
+  // greeting on DOMContentLoaded, which fires before React mounts the footer,
+  // so the element keeps its inline fallback text and never picks up the
+  // seasonal swap or the glacial flow (upstream #325). observe() re-scans and
+  // watches for inserted nodes.
+  useEffect(() => window.Whimsy?.observe(document.body), [])
+
   // Mobile drawer focus management — inert when closed, focus-trapped when open.
   const drawerRef = useRef<HTMLElement>(null)
   useEffect(() => {
