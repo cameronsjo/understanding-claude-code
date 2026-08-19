@@ -14,37 +14,14 @@ body {
 }
 
 /* ---- appbar + intro band ---- */
-/* Artificer's .appbar carries its own `padding: 0 var(--s-md)` for a full-bleed
-   bar, but ours sits INSIDE .container--lg (already padded), so that 16px double-
-   insets the content — and on a phone it's the difference between the long wordmark
-   + theme toggle fitting or spilling 16px past the viewport. Zero it (higher
-   specificity beats the vendored rule + its safe-area variant). See a-d-s #83. */
-.app .appbar {
-  padding-inline: 0;
-}
+/* The Appbar's `contained` prop now supplies the zero inline-padding this local
+   `.app .appbar { padding-inline: 0 }` override used to hand-roll (a-d-s #83), and
+   the mobile wordmark ellipsis + hamburger hit-area are native to the compiled
+   `Appbar`/`AppShell` chrome as of 0.24.x — both shims retired. */
 .appbar__brand .whimsy {
   font-size: inherit;
   letter-spacing: inherit;
 }
-/* Mobile: the long wordmark + hamburger + theme toggle must share ~390px. Flex
-   items refuse to shrink below min-content by default, so the brand pushes the
-   toggle past the viewport edge (16px page overflow). Let the brand shrink and
-   ellipsize instead — the toggle and hamburger keep their full hit areas. */
-@media (max-width: 800px) {
-  .appbar__brand {
-    flex: 1;
-    min-width: 0;
-  }
-  .appbar__brand .whimsy {
-    display: block;
-    font-size: 0.95rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-/* The hamburger keeps the .btn--ghost default (--fg-secondary): at 32px the glyph
-   reads clearly without full --fg, which is glaringly bright on the dark bar. */
 .intro {
   margin-block: var(--s-lg) var(--s-xl);
 }
@@ -58,52 +35,20 @@ body {
 }
 
 /* ---- app shell: [ sidenav | content ] ---- */
-.app-shell {
-  display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
-  gap: var(--s-lg);
-  align-items: start;
-}
-.app-sidenav {
-  position: sticky;
-  top: calc(56px + var(--s-md));
-}
+/* AppShell/AppShellContent (rail="230px" gap="var(--s-lg)" props in App.tsx) replace
+   the local grid override + `.app-sidenav` sticky wrapper above; the SideNav
+   `sticky` prop + its `style` (`--sidenav-sticky-top`) replace the offset. The
+   `.sidenav button` grammar (flex layout, hover, focus-visible, aria-current) is
+   shipped natively by the vendored `.sidenav a, .sidenav button` rule since
+   0.18.1 — the hand-rolled shim replicating it is retired.
 
-/* Sidenav button shim — Artificer styles only `.sidenav a`, but these items switch
-   SPA state rather than navigate, so they're <button>s. Replicate the link grammar. */
-.sidenav button {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  width: 100%;
-  min-height: 44px;
-  padding: 6px 10px;
-  border: none;
-  background: none;
-  border-radius: var(--radius-sm);
-  color: var(--fg-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--t-label-md-size);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-.sidenav button > .label {
-  flex: 1;
-  min-width: 0;
-}
-.sidenav button:hover {
-  background: var(--bg);
-  color: var(--fg);
-}
-.sidenav button:focus-visible {
-  outline: var(--focus-width) solid var(--accent);
-  outline-offset: var(--focus-offset-inset);
-}
-.sidenav button[aria-current="page"] {
-  background: var(--bg);
-  color: var(--accent);
-  box-shadow: inset 2px 0 0 var(--accent);
+   The vendored `.app-shell` is designed as the WHOLE page's shell (its own
+   `min-height: 100dvh`, with `.app-shell > .appbar` claiming a dedicated grid
+   row) — this app keeps its `.appbar` and `.intro` band outside the shell (as
+   before), so nothing claims that row and the 100dvh floor would otherwise add
+   a large blank gap before the footer. Zero it back to content-sized. */
+.app-shell {
+  min-height: auto;
 }
 
 /* ---- pill tabs (TabPicker) ---- */
@@ -604,17 +549,13 @@ body {
 
 /* ---- tablet breakpoint (Artificer --bp-tablet: 800px) ---- */
 @media (max-width: 800px) {
-  .app-shell {
-    /* minmax(0, 1fr), not a bare 1fr: bare `1fr` = minmax(auto, 1fr), whose auto
-       minimum refuses to shrink below the content's min-content — so a wide child
-       (a diagram pane) blows the single column past the viewport and the whole
-       page scrolls sideways. minmax(0, …) lets the column shrink and the child's
-       own overflow-x:auto take over. */
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .app-sidenav {
-    display: none;
-  }
+  /* The .app-shell collapse is upstream's job (vendored artificer.css hides the
+     rail and re-templates to [main-start] minmax(0,1fr) [main-end] at this same
+     breakpoint). A local grid-template-columns override here, written without
+     those named lines, would orphan .app-shell__content's `grid-column:
+     main-start / main-end` onto implicit columns and shove content off to one
+     side on phones (spec-compare fa8c2e7) — so it's deliberately absent, not
+     forgotten. */
   .player-body {
     grid-template-columns: 1fr;
   }

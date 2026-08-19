@@ -3,6 +3,56 @@
 How this project bends the Artificer design system, and why. Each entry mirrors a
 feedback issue filed upstream.
 
+## 2026-08-19 — Adopted the compiled React chrome components (0.24.2, two rows retired)
+
+Bumped `@cameronsjo/artificer` 0.22.1 → **0.24.2** (moved from `devDependencies` to
+`dependencies` — it's now imported at runtime via `@cameronsjo/artificer/react`, not
+just vendored as CSS/JS assets) and adopted the compiled chrome adapter: `Appbar`,
+`NavDrawer`, `SideNav`, `SideNavFooter`, `ThemeToggle`, `AppShell`, `AppShellContent`.
+Mirrors the same migration already landed in `spec-compare#31` and
+`agentic-harnesses#26`.
+
+### What closed
+
+`App.tsx` lost the hand-rolled `<header class="appbar">` + hamburger button, the
+`.app-shell`/`.app-sidenav` wrapper `<aside>`, the `.nav-scrim` + `<aside
+class="nav-drawer">` + its `inert`/focus-trap `useEffect`, and the hand-rolled
+`ThemeToggle` function (`readTheme`/`THEME_KEY`/light-dark-only cycle) — replaced by
+the package's `ThemeToggle` (dark → light → auto). `ConceptNav` collapsed to building
+a `SideNavGroup[]` from `OVERVIEW` + `clusters`; the open/touched section state for
+the drawer now ships compiled inside `SideNav`. Also deleted the hand-copied
+`focus.d.ts`/`icons.d.ts`/`whimsy.d.ts` — one `src/artificer-modules.d.ts` with
+type-only side-effect imports (`import type {} from '@cameronsjo/artificer/theme.js'`,
+etc., including `focus.js` for `GraphModal.tsx`'s still-manual `ArtificerFocus.trap`)
+now pulls in the shipped ambient `Window.*` declarations without a second hand-copied
+type surface.
+
+| row | was | now |
+|---|---|---|
+| (2026-06-01, override) | `.appbar` / `.appbar__brand` / `.wordmark` mobile ellipsis shim (`flex: 1; min-width: 0` + `overflow: hidden; text-overflow: ellipsis` at 800px) | **Retired.** `.appbar__brand` now carries `flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap` directly in the vendored 0.24.2 `artificer.css`, plus a coarse-pointer 44px re-floor — the local shim duplicated rules that shipped upstream. |
+| (2026-06-01, override) | `.sidenav a` / `.sidenav button` grammar shim (flex layout, hover, focus-visible, `aria-current`) | **Retired.** Shipped natively by the vendored `.sidenav a, .sidenav button` rule since 0.18.1 — this app just never adopted the compiled chrome to drop its own copy until now. |
+
+**Structural note, not a shim:** the vendored `.app-shell` is a whole-page shell
+(`min-height: 100dvh`, with `.app-shell > .appbar` claiming its own grid row) — this
+app keeps `.appbar` and `.intro` outside the shell, same as every sibling consumer,
+so nothing claims that row. Added the same scoped `.app-shell { min-height: auto }`
+override `spec-compare` and `agentic-harnesses` carry, confirmed against the vendored
+0.24.2 `artificer.css` (`.app-shell { min-height: 100dvh }` is a real declaration) —
+a composition choice, not a shim against a missing/broken upstream rule.
+
+### What's still app-specific (kept, not shims)
+
+- The `.app-sidenav` sticky top offset (`calc(56px + var(--s-md))`) now passes
+  through `SideNav`'s `style` prop as `--sidenav-sticky-top` instead of a CSS rule.
+- `GraphModal.tsx`'s manual `ArtificerFocus.trap()` — the compiled chrome only owns
+  the nav drawer's focus trap, not this app's own diagram-expand modal.
+- The three-zone `.colophon` footer (Sourced/Disclosure grid + spine + fine print) —
+  unrelated to this migration, untouched.
+
+Build (`npm run build`, which runs `validate` + `tsc` + `vite build`) passes clean.
+This repo ships no test files on `main` (`npm test` exits 1 with "no test files
+found" on both `main` and this branch) — not a regression.
+
 ## 2026-08-02 — Upgrade 0.21.0 → 0.22.0, adopt the `.colophon__spine` footer
 
 Replaced the hand-rolled `.app-footer` / `.footer-grid` / `.footer-col` / `.footer-fine`
