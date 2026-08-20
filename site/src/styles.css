@@ -7,6 +7,16 @@ body {
   font-family: var(--font-mono);
 }
 
+/* Below the tablet breakpoint the theme toggle lives in the drawer footer
+   (SideNavFooter); hide the appbar instance so the control appears once.
+   Which surface owns the toggle is app-side, not a chrome-component knob —
+   same rule as spec-compare/agentic-harnesses. */
+@media (max-width: 800px) {
+  .appbar__actions .theme-toggle {
+    display: none;
+  }
+}
+
 /* Width, centering, inline padding come from .container--lg; keep only the
    vertical rhythm here so the shell doesn't fight the system container. */
 .app {
